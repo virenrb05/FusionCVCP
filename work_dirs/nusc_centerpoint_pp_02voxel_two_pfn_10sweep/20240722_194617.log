@@ -1,0 +1,2 @@
+2024-07-22 19:46:17,520 - INFO - Start running, host: vxm240030@pdml6, work_dir: /home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep
+2024-07-22 19:46:17,520 - INFO - workflow: [('train', 1)], max: 20 epochs

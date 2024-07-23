@@ -29,7 +29,7 @@ model = dict(
             type="DynamicVoxelEncoder",
             pc_range=[-54, -54, -5.0, 54, 54, 3.0],
             voxel_size=[0.075, 0.075, 0.2],
-            virtual=True
+            virtual=False
         ),
         backbone=dict(
             type="SpMiddleResNetFHD", num_input_features=21, ds_factor=8
@@ -213,8 +213,8 @@ test_pipeline = [
     dict(type="Reformat"),
 ]
 
-train_anno = "data/nuScenes/infos_train_10sweeps_withvelo_filter_painted_True.pkl"
-val_anno = "data/nuScenes/infos_val_10sweeps_withvelo_filter_painted_True.pkl"
+train_anno = "data/nuScenes/infos_train_10sweeps_withvelo_filter_True.pkl"
+val_anno = "data/nuScenes/infos_val_10sweeps_withvelo_filter_True.pkl"
 test_anno = None
 
 data = dict(

@@ -8,6 +8,9 @@ import warnings
 warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaWarning)
 
+import torch
+from torch.utils.tensorboard import SummaryWriter
+
 import numpy as np
 import torch
 import yaml
@@ -153,6 +156,7 @@ def main():
         )
 
     # add an attribute for visualization convenience
+    writer = SummaryWriter()
     model.CLASSES = datasets[0].CLASSES
     train_detector(
         model,
@@ -162,6 +166,7 @@ def main():
         validate=args.validate,
         logger=logger,
     )
+    writer.flush()
 
 
 if __name__ == "__main__":
