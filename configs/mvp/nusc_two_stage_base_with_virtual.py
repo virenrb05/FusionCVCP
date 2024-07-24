@@ -23,37 +23,37 @@ target_assigner = dict(
 model = dict(
     type='TwoStageDetector',
     first_stage_cfg=dict(
-        type="VoxelNet",
-        pretrained='work_dirs/nusc_centerpoint_voxelnet_0075voxel_fix_bn_z_scale_virtual/epoch_20.pth',
+        type="PointPillars",
+        pretrained=None,
         reader=dict(
-            type="DynamicVoxelEncoder",
-            pc_range=[-54, -54, -5.0, 54, 54, 3.0],
-            voxel_size=[0.075, 0.075, 0.2],
-            virtual=False
+            type="PillarFeatureNet",
+            num_filters=[64, 64],
+            num_input_features=5,
+            with_distance=False,
+            voxel_size=(0.2, 0.2, 8),
+            pc_range=(-51.2, -51.2, -5.0, 51.2, 51.2, 3.0),
         ),
-        backbone=dict(
-            type="SpMiddleResNetFHD", num_input_features=21, ds_factor=8
-        ),
+        backbone=dict(type="PointPillarsScatter", ds_factor=1),
         neck=dict(
             type="RPN",
-            layer_nums=[5, 5],
-            ds_layer_strides=[1, 2],
-            ds_num_filters=[128, 256],
-            us_layer_strides=[1, 2],
-            us_num_filters=[256, 256],
-            num_input_features=256,
+            layer_nums=[3, 5, 5],
+            ds_layer_strides=[2, 2, 2],
+            ds_num_filters=[64, 128, 256],
+            us_layer_strides=[0.5, 1, 2],
+            us_num_filters=[128, 128, 128],
+            num_input_features=64,
             logger=logging.getLogger("RPN"),
         ),
         bbox_head=dict(
+            # type='RPNHead',
             type="CenterHead",
-            in_channels=sum([256, 256]),
+            in_channels=sum([128, 128, 128]),
             tasks=tasks,
             dataset='nuscenes',
             weight=0.25,
             code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 1.0, 1.0],
-            common_heads={'reg': (2, 2), 'height': (1, 2), 'dim':(3, 2), 'rot':(2, 2), 'vel': (2, 2)},
-            share_conv_channel=64,
-            dcn_head=False
+            common_heads={'reg': (2, 2), 'height': (1, 2), 'dim': (3, 2), 'rot': (
+                2, 2), 'vel': (2, 2)},  # (output_channel, num_conv)
         ),
     ),
     second_stage_modules=[
@@ -90,9 +90,9 @@ model = dict(
                 CLS_LOSS='BinaryCrossEntropy',
                 REG_LOSS='L1',
                 LOSS_WEIGHTS={
-                'rcnn_cls_weight': 1.0,
-                'rcnn_reg_weight': 1.0,
-                'code_weights': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2]
+                    'rcnn_cls_weight': 1.0,
+                    'rcnn_reg_weight': 1.0,
+                    'code_weights': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2]
                 }
             )
         ),
@@ -143,7 +143,7 @@ data_root = "data/nuScenes"
 db_sampler = dict(
     type="GT-AUG",
     enable=False,
-    db_info_path="data/nuScenes/dbinfos_train_10sweeps_withvelo_virtual.pkl",
+    db_info_path="data/nuScenes/dbinfos_train_10sweeps_withvelo.pkl",
     sample_groups=[
         dict(car=2),
         dict(truck=3),
@@ -182,7 +182,7 @@ train_preprocessor = dict(
     global_rot_noise=[-0.78539816, 0.78539816],
     global_scale_noise=[0.9, 1.1],
     global_translate_std=0.5,
-    db_sampler=None, # db_sampler,
+    db_sampler=None,  # db_sampler,
     class_names=class_names,
 )
 
@@ -202,6 +202,7 @@ train_pipeline = [
     dict(type="LoadPointCloudFromFile", dataset=dataset_type),
     dict(type="LoadPointCloudAnnotations", with_bbox=True),
     dict(type="Preprocess", cfg=train_preprocessor),
+    dict(type="Voxelization", cfg=voxel_generator),
     dict(type="AssignLabel", cfg=train_cfg["assigner"]),
     dict(type="Reformat"),
 ]
@@ -209,6 +210,7 @@ test_pipeline = [
     dict(type="LoadPointCloudFromFile", dataset=dataset_type),
     dict(type="LoadPointCloudAnnotations", with_bbox=True),
     dict(type="Preprocess", cfg=val_preprocessor),
+    dict(type="Voxelization", cfg=voxel_generator),
     dict(type="AssignLabel", cfg=train_cfg["assigner"]),
     dict(type="Reformat"),
 ]
@@ -226,7 +228,6 @@ data = dict(
         info_path=train_anno,
         ann_file=train_anno,
         nsweeps=nsweeps,
-        virtual=True,
         class_names=class_names,
         pipeline=train_pipeline,
     ),
@@ -237,7 +238,6 @@ data = dict(
         test_mode=True,
         ann_file=val_anno,
         nsweeps=nsweeps,
-        virtual=True,
         class_names=class_names,
         pipeline=test_pipeline,
     ),
@@ -247,12 +247,10 @@ data = dict(
         info_path=test_anno,
         ann_file=test_anno,
         nsweeps=nsweeps,
-        virtual=True,
         class_names=class_names,
         pipeline=test_pipeline,
     ),
 )
-
 
 
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
@@ -281,5 +279,5 @@ dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"
 work_dir = './work_dirs/{}/'.format(__file__[__file__.rfind('/') + 1:-3])
 load_from = None
-resume_from = None 
+resume_from = None
 workflow = [('train', 1)]

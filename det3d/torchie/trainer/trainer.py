@@ -364,19 +364,19 @@ class Trainer(object):
         self.call_hook("after_data_to_device")
 
         if train_mode:
-            losses = model(example, return_loss=True)
+            losses, f1 = model(example, return_loss=True)
             self.call_hook("after_forward")
             loss, log_vars = parse_second_losses(losses)
             del losses
 
             outputs = dict(
-                loss=loss, log_vars=log_vars, num_samples=-1  # TODO: FIX THIS
+                loss=loss, log_vars=log_vars, num_samples=-1, f1=f1   # TODO: FIX THIS
             )
             self.call_hook("after_parse_loss")
 
             return outputs
         else:
-            return model(example, return_loss=False)
+            return model(example, return_loss=False) # boxes, f1
 
     def train(self, data_loader, epoch, **kwargs):
 
@@ -412,6 +412,7 @@ class Trainer(object):
             if not isinstance(outputs, dict):
                 raise TypeError("batch_processor() must return a dict")
             if "log_vars" in outputs:
+                outputs["log_vars"]["f1"] = outputs["f1"].item()
                 self.log_buffer.update(outputs["log_vars"], outputs["num_samples"])
             self.outputs = outputs
             self.call_hook("after_train_iter")

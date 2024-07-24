@@ -13,7 +13,7 @@ def torch_to_np_dtype(ttype):
     type_map = {
         torch.float16: np.dtype(np.float16),
         torch.float32: np.dtype(np.float32),
-        torch.float16: np.dtype(np.float64),
+        torch.float64: np.dtype(np.float64),
         torch.int32: np.dtype(np.int32),
         torch.int64: np.dtype(np.int64),
         torch.uint8: np.dtype(np.uint8),
@@ -52,7 +52,7 @@ def corners_nd(dims, origin=0.5):
         # generate clockwise box corners
         corners_norm = corners_norm[[0, 1, 3, 2]]
     elif ndim == 3:
-        corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
+        corners_norm = corners_norm[[0, 4, 6, 2, 1, 5, 7, 3]]
     corners_norm = corners_norm - np.array(origin, dtype=dtype)
     corners_norm = torch.from_numpy(corners_norm).type_as(dims)
     corners = dims.view(-1, 1, ndim) * corners_norm.view(1, 2 ** ndim, ndim)
