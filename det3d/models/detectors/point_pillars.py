@@ -31,7 +31,7 @@ class PointPillars(SingleStageDetector):
             input_features, data["coors"], data["batch_size"], data["input_shape"]
         )
         if self.with_neck:
-                x = self.neck(x)
+            x = self.neck(x)
         return x
 
     def forward(self, example, return_loss=True, **kwargs):
@@ -53,31 +53,29 @@ class PointPillars(SingleStageDetector):
         x = self.extract_feat(data)
         preds, _ = self.bbox_head(x)
 
-        loss = self.bbox_head.loss(example, preds, self.test_cfg)
-        boxes = self.bbox_head.predict(example, preds, self.test_cfg)
 
-        # preds should be preds with vel removed and class labels appended
-        preds = []
-        for boxes_batch in boxes:
-            pred = boxes_batch["box3d_lidar"]
-            pred = pred[:, list(range(6)) + [-1]]
-            pred = torch.cat(
-                (pred, boxes_batch['label_preds'].unsqueeze(1)), dim=1)
-            preds.append(pred)
+        # # preds should be preds with vel removed and class labels appended
+        # preds = []
+        # for boxes_batch in boxes:
+        #     pred = boxes_batch["box3d_lidar"]
+        #     pred = pred[:, list(range(6)) + [-1]]
+        #     pred = torch.cat(
+        #         (pred, boxes_batch['label_preds'].unsqueeze(1)), dim=1)
+        #     preds.append(pred)
 
-        # do the same with the labels
-        labels = []
-        for _boxes in example['gt_boxes_and_cls']:
-            label = _boxes[:, list(range(6)) + [-2, -1]]
-            labels.append(label)
+        # # do the same with the labels
+        # labels = []
+        # for _boxes in example['gt_boxes_and_cls']:
+        #     label = _boxes[:, list(range(6)) + [-2, -1]]
+        #     labels.append(label)
 
-        self.f1_metric.update(preds, labels)
-        f1 = self.f1_metric.compute()
+        # self.f1_metric.update(preds, labels)
+        # f1 = self.f1_metric.compute()
 
         if return_loss:
-            return loss, f1
+            return self.bbox_head.loss(example, preds, self.test_cfg)
         else:
-            return boxes, f1
+            return self.bbox_head.predict(example, preds, self.test_cfg)
 
     def forward_two_stage(self, example, return_loss=True, **kwargs):
         voxels = example["voxels"]
@@ -156,15 +154,15 @@ def iou_3d(box1, box2):
 
     from det3d.ops.iou3d_nms.iou3d_nms_utils import boxes_iou3d_gpu
 
-    iou_3d = boxes_iou3d_gpu(box1, box2)
+    iou_3d = boxes_iou3d_gpu(box1[:, :-1], box2[:, :-1])
 
-    box1 = box1.cpu()
-    box2 = box2.cpu()
+    # box1 = box1.cpu()
+    # box2 = box2.cpu()
     # from det3d.core.bbox.box_torch_ops import center_to_corner_box3d
     # v1 = center_to_corner_box3d(centers=box1[:, :3], dims=box1[:, 3:6], angles=box1[:, 6])
     # v2 = center_to_corner_box3d(centers=box2[:, :3], dims=box2[:, 3:6], angles=box2[:, 6])
-    v1 = get_3d_box_vertices(box1[:, :3], box1[:, 3:6], box1[:, 6])
-    v2 = get_3d_box_vertices(box2[:, :3], box2[:, 3:6], box2[:, 6])
+    # v1 = get_3d_box_vertices(box1[:, :3], box1[:, 3:6], box1[:, 6])
+    # v2 = get_3d_box_vertices(box2[:, :3], box2[:, 3:6], box2[:, 6])
     # v2 = get_3d_box_vertices(box2[:3], box2[3:6], box2[6])
 
     # v1 = np.expand_dims(v1, axis=0)
@@ -187,28 +185,85 @@ class F1Score3D(Metric):
         self.add_state("fp", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("fn", default=torch.tensor(0), dist_reduce_fx="sum")
 
-    def update(self, preds, target):
+    def update(self, preds, targets):
+        from tqdm import tqdm
+        preds = torch.cat(preds, dim=0)
+        targets = torch.cat(targets, dim=0)
+        ious = iou_3d(preds, targets)
+
+        # # Convert class labels to PyTorch tensors for vectorized comparison
+        # preds_classes = torch.tensor([pred[-1] for pred in preds])
+        # targets_classes = torch.tensor([target[-1] for target in targets])
+
+        # # Calculate matches based on IoU threshold and class labels
+        # iou_matches = ious > self.iou_threshold
+        # class_matches = (preds_classes.unsqueeze(1) ==
+        #                  targets_classes.unsqueeze(0))
+
+        # # True Positives (TP): IoU and class match
+        # tp_matrix = iou_matches & class_matches
+        # self.tp = tp_matrix.sum().item()
+
+        # # False Positives (FP): IoU or class match, but not both
+        # fp_matrix = (iou_matches | class_matches) & ~tp_matrix
+        # self.fp = fp_matrix.sum().item()
+
+        # # False Negatives (FN): Target does not have any matching prediction
+        # fn_matrix = ~(torch.any(iou_matches, dim=0) &
+        #               torch.any(class_matches, dim=0))
+        # self.fn = fn_matrix.sum().item()
+
+        # print("True Positives (TP):", self.tp)
+        # print("False Positives (FP):", self.fp)
+        # print("False Negatives (FN):", self.fn)
+
         # preds and target are expected to be lists of bounding boxes with class labels
-        preds = torch.cat(preds)
-        target = torch.cat(target)
-        ious = iou_3d(preds[:, :-1], target[:, :-1])
-        for col_ind in range(ious.shape[1]):
-            pred_col = ious[:, col_ind]
-            # get best match for thresholding
-            best_label_ind = pred_col.argmax()
+        # for target_i, target in enumerate(targets):
+        #     for pred_i, pred in tqdm(enumerate(preds)):
+        #         if ious[pred_i, target_i] > self.iou_threshold and pred[-1] == target[-1]:
+        #             self.tp += 1
+                
+        #         if ious[pred_i, target_i] > self.iou_threshold or pred[-1] == target[-1]:
+        #             self.fp += 1
 
-            if pred_col[best_label_ind] >= self.iou_threshold and preds[col_ind][-1] == target[best_label_ind][-1]:
-                self.tp += 1
-                target = torch.cat(
-                    (ious[:best_label_ind], ious[best_label_ind+1:]))
-
-            else:
-                self.fp += 1
-
-        self.fn += len(target)
+        # for target_i, target in tqdm(enumerate(targets)):
+        #     if not any(ious[:, target_i] > self.iou_threshold) or not any([pred[-1] == target[-1] for pred in preds]):
+        #         self.fn += 1
+        
+        
+        
+        
+        print("True Positives (TP):", self.tp)
+        print("False Positives (FP):", self.fp)
+        print("False Negatives (FN):", self.fn)
 
     def compute(self):
         precision = self.tp / (self.tp + self.fp)
         recall = self.tp / (self.fn + self.tp)
         f1 = 2 * (precision * recall) / (precision + recall)
         return f1
+
+def calculate_tp_fp_fn_with_iou_matrix(iou_matrix, iou_threshold=0.5):
+    from scipy.optimize import linear_sum_assignment
+    num_preds, num_gts = iou_matrix.shape
+    
+    # Apply the Hungarian algorithm to find the optimal assignment
+    row_ind, col_ind = linear_sum_assignment(-iou_matrix)
+    
+    tp = 0
+    fp = 0
+    fn = 0
+    
+    matched_pred = set()
+    matched_gt = set()
+    
+    for i, j in zip(row_ind, col_ind):
+        if iou_matrix[i, j] >= iou_threshold:
+            tp += 1
+            matched_pred.add(i)
+            matched_gt.add(j)
+    
+    fp = num_preds - len(matched_pred)
+    fn = num_gts - len(matched_gt)
+    
+    return tp, fp, fn
