@@ -69,7 +69,7 @@ def main():
     # torch.backends.cudnn.deterministic = True
     # torch.backends.cudnn.benchmark = False
     # np.random.seed(0)
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
     
     args = parse_args()
 

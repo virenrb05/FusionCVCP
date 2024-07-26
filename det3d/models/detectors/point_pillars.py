@@ -51,31 +51,16 @@ class PointPillars(SingleStageDetector):
         )
 
         x = self.extract_feat(data)
-        preds, _ = self.bbox_head(x)
+        pred_boxes, _ = self.bbox_head(x)
 
-
-        # # preds should be preds with vel removed and class labels appended
-        # preds = []
-        # for boxes_batch in boxes:
-        #     pred = boxes_batch["box3d_lidar"]
-        #     pred = pred[:, list(range(6)) + [-1]]
-        #     pred = torch.cat(
-        #         (pred, boxes_batch['label_preds'].unsqueeze(1)), dim=1)
-        #     preds.append(pred)
-
-        # # do the same with the labels
-        # labels = []
-        # for _boxes in example['gt_boxes_and_cls']:
-        #     label = _boxes[:, list(range(6)) + [-2, -1]]
-        #     labels.append(label)
-
-        # self.f1_metric.update(preds, labels)
-        # f1 = self.f1_metric.compute()
+        preds = self.bbox_head.predict(example, pred_boxes, self.test_cfg)
+        
+        self.f1_metric(preds, example['gt_boxes_and_cls'])
 
         if return_loss:
-            return self.bbox_head.loss(example, preds, self.test_cfg)
+            return self.bbox_head.loss(example, pred_boxes, self.test_cfg)
         else:
-            return self.bbox_head.predict(example, preds, self.test_cfg)
+            return preds
 
     def forward_two_stage(self, example, return_loss=True, **kwargs):
         voxels = example["voxels"]
@@ -107,6 +92,8 @@ class PointPillars(SingleStageDetector):
             new_preds.append(new_pred)
 
         boxes = self.bbox_head.predict(example, new_preds, self.test_cfg)
+
+        self.f1_metric(boxes, example['gt_boxes_and_cls'])
 
         if return_loss:
             return boxes, bev_feature, self.bbox_head.loss(example, preds, self.test_cfg)
@@ -154,7 +141,7 @@ def iou_3d(box1, box2):
 
     from det3d.ops.iou3d_nms.iou3d_nms_utils import boxes_iou3d_gpu
 
-    iou_3d = boxes_iou3d_gpu(box1[:, :-1], box2[:, :-1])
+    iou_3d = boxes_iou3d_gpu(box1, box2)
 
     # box1 = box1.cpu()
     # box2 = box2.cpu()
@@ -185,85 +172,96 @@ class F1Score3D(Metric):
         self.add_state("fp", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("fn", default=torch.tensor(0), dist_reduce_fx="sum")
 
-    def update(self, preds, targets):
-        from tqdm import tqdm
-        preds = torch.cat(preds, dim=0)
-        targets = torch.cat(targets, dim=0)
-        ious = iou_3d(preds, targets)
+    def update(self, preds: dict, labels: torch.Tensor):
+        # collate all predictions into a single list
+        pred_boxes = []
+        pred_scores = []
+        pred_cls = []
+        for i in range(len(preds)):
+            pred_boxes.append(preds[i]["box3d_lidar"])
+            pred_scores.append(preds[i]["scores"])
+            pred_cls.append(preds[i]['label_preds'])
 
-        # # Convert class labels to PyTorch tensors for vectorized comparison
-        # preds_classes = torch.tensor([pred[-1] for pred in preds])
-        # targets_classes = torch.tensor([target[-1] for target in targets])
+        PRED_SCORE_THRESHOLD = 0.1
+        labels = labels.view(labels.shape[0]*labels.shape[1], labels.shape[-1])
+        pred_boxes = torch.cat(pred_boxes, dim=0)[:, [0, 1, 2, 3, 4, 5, -1]]
+        pred_scores = torch.cat(pred_scores, dim=0)
+        pred_cls = torch.cat(pred_cls, dim=0)
+        label_boxes = labels[:, [0, 1, 2, 3, 4, 5, -2]]
+        label_cls = labels[:, -1]
 
-        # # Calculate matches based on IoU threshold and class labels
-        # iou_matches = ious > self.iou_threshold
-        # class_matches = (preds_classes.unsqueeze(1) ==
-        #                  targets_classes.unsqueeze(0))
+        # filter out zero rows in labels and preds
+        zero_row_mask_pred = pred_boxes.abs().sum(dim=1) != 0
+        pred_boxes = pred_boxes[zero_row_mask_pred]
+        pred_cls = pred_cls[zero_row_mask_pred]
+        zero_row_mask_label = label_boxes.abs().sum(dim=1) != 0
+        label_boxes = label_boxes[zero_row_mask_label]
+        label_cls = label_cls[zero_row_mask_label]
 
-        # # True Positives (TP): IoU and class match
-        # tp_matrix = iou_matches & class_matches
-        # self.tp = tp_matrix.sum().item()
+        # filter out predictions with score < confidence threshold
+        pred_score_mask = pred_scores > PRED_SCORE_THRESHOLD
+        pred_boxes = pred_boxes[pred_score_mask]
+        pred_cls = pred_cls[pred_score_mask]
 
-        # # False Positives (FP): IoU or class match, but not both
-        # fp_matrix = (iou_matches | class_matches) & ~tp_matrix
-        # self.fp = fp_matrix.sum().item()
+        ious = iou_3d(pred_boxes, label_boxes)
 
-        # # False Negatives (FN): Target does not have any matching prediction
-        # fn_matrix = ~(torch.any(iou_matches, dim=0) &
-        #               torch.any(class_matches, dim=0))
-        # self.fn = fn_matrix.sum().item()
-
-        # print("True Positives (TP):", self.tp)
-        # print("False Positives (FP):", self.fp)
-        # print("False Negatives (FN):", self.fn)
-
-        # preds and target are expected to be lists of bounding boxes with class labels
-        # for target_i, target in enumerate(targets):
-        #     for pred_i, pred in tqdm(enumerate(preds)):
-        #         if ious[pred_i, target_i] > self.iou_threshold and pred[-1] == target[-1]:
-        #             self.tp += 1
-                
-        #         if ious[pred_i, target_i] > self.iou_threshold or pred[-1] == target[-1]:
-        #             self.fp += 1
-
-        # for target_i, target in tqdm(enumerate(targets)):
-        #     if not any(ious[:, target_i] > self.iou_threshold) or not any([pred[-1] == target[-1] for pred in preds]):
-        #         self.fn += 1
-        
-        
-        
-        
-        print("True Positives (TP):", self.tp)
-        print("False Positives (FP):", self.fp)
-        print("False Negatives (FN):", self.fn)
+        # add class labels to the end of the box tensor
+        preds = torch.cat((pred_boxes, pred_cls.unsqueeze(1)), dim=1)
+        labels = torch.cat((label_boxes, label_cls.unsqueeze(1)), dim=1)
+        self.calculate_tp_fp_fn_with_iou_matrix(
+            preds, labels, ious, self.iou_threshold)
 
     def compute(self):
         precision = self.tp / (self.tp + self.fp)
         recall = self.tp / (self.fn + self.tp)
         f1 = 2 * (precision * recall) / (precision + recall)
+        print(f'Precision: {precision}, Recall: {recall}, F1: {f1}')
         return f1
 
-def calculate_tp_fp_fn_with_iou_matrix(iou_matrix, iou_threshold=0.5):
-    from scipy.optimize import linear_sum_assignment
-    num_preds, num_gts = iou_matrix.shape
-    
-    # Apply the Hungarian algorithm to find the optimal assignment
-    row_ind, col_ind = linear_sum_assignment(-iou_matrix)
-    
-    tp = 0
-    fp = 0
-    fn = 0
-    
-    matched_pred = set()
-    matched_gt = set()
-    
-    for i, j in zip(row_ind, col_ind):
-        if iou_matrix[i, j] >= iou_threshold:
-            tp += 1
-            matched_pred.add(i)
-            matched_gt.add(j)
-    
-    fp = num_preds - len(matched_pred)
-    fn = num_gts - len(matched_gt)
-    
-    return tp, fp, fn
+    def calculate_tp_fp_fn_with_iou_matrix(self, preds, labels, iou_matrix, iou_threshold=0.5):
+        num_preds = len(preds)
+
+        # Goal: Calculate true positives (TP), false positives (FP), and false negatives (FN)
+        # TP: Predictions with IoU greater than iou_threshold for at least one label with matching class
+        # FP: Ghost predictions with no matching labels (IoU < iou_threshold for all labels), and mispredictions (IoU >= iou_threshold but class does not match, or )
+        # FN: Labels with no matching predictions
+
+        # Remove "ghost predictions" with no matching labels
+        # No pairs of these predictions and any labels have IoU greater than iou_threshold
+        # These predictions are false positives
+        unmatched_preds = torch.all(iou_matrix < iou_threshold, dim=1)
+        self.fp += unmatched_preds.sum().item()
+        # remove rows for these predictions from the iou matrix
+        remaining_preds_mask = ~unmatched_preds
+        iou_matrix = iou_matrix[remaining_preds_mask]
+        # remove these predictions from the list of predictions
+        filtered_preds = preds[remaining_preds_mask]
+
+        # The matrix now only contains predictions with IoU greater than iou_threshold for at least one label. Some of these predictions may still be false positives - mispredictions.
+
+        # First, look for true positives - predictions with IoU greater than iou_threshold for at least one label with matching class
+        # For each prediction, find the label with the highest IoU
+        # If the class of the prediction and the label match, it is a true positive. We should remove the column for this label from the iou matrix so it cannot be matched.
+        # If the class of the prediction and the label do not match, it is a false positive. We should remove this prediction from the list of predictions, but keep the label for future possible matches.
+
+        for pred_ind in range(len(filtered_preds)):
+            # Get best label match for this prediction
+            best_label_iou, best_label_iou_ind = torch.max(
+                iou_matrix[pred_ind], dim=0)
+
+            # Check IoU  > threshold and class match
+            if best_label_iou >= iou_threshold and filtered_preds[pred_ind][-1] == labels[best_label_iou_ind][-1]:
+                self.tp += 1
+                # Remove this label from the iou matrix so it cannot be matched again, only unmatched labels remain
+                iou_matrix = torch.cat(
+                    (iou_matrix[:, :best_label_iou_ind], iou_matrix[:, best_label_iou_ind+1:]), dim=1)
+            else:
+                # False positive - IoU < threshold and/or class does not match
+                self.fp += 1
+
+        # Remaining unmatched labels are false negatives
+        self.fn += iou_matrix.shape[1]
+
+        assert self.tp + \
+            self.fn == len(labels), "TP + FN should equal the number of labels"
+        print(f"TP: {self.tp}, FP: {self.fp}, FN: {self.fn}")
