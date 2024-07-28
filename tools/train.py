@@ -8,6 +8,9 @@ import warnings
 warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaWarning)
 
+import torch
+from torch.utils.tensorboard import SummaryWriter
+
 import numpy as np
 import torch
 import yaml
@@ -66,7 +69,8 @@ def main():
     # torch.backends.cudnn.deterministic = True
     # torch.backends.cudnn.benchmark = False
     # np.random.seed(0)
-
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+    
     args = parse_args()
 
     cfg = Config.fromfile(args.config)
@@ -153,6 +157,7 @@ def main():
         )
 
     # add an attribute for visualization convenience
+    writer = SummaryWriter()
     model.CLASSES = datasets[0].CLASSES
     train_detector(
         model,
@@ -162,6 +167,7 @@ def main():
         validate=args.validate,
         logger=logger,
     )
+    writer.flush()
 
 
 if __name__ == "__main__":

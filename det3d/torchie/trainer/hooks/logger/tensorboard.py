@@ -36,17 +36,27 @@ class TensorboardLoggerHook(LoggerHook):
 
     @master_only
     def log(self, trainer):
+        import numpy as np
         for var in trainer.log_buffer.output:
             if var in ["time", "data_time"]:
                 continue
             tag = "{}/{}".format(var, trainer.mode)
             record = trainer.log_buffer.output[var]
-            if isinstance(record, str):
-                self.writer.add_text(tag, record, trainer.iter)
-            else:
-                self.writer.add_scalar(
-                    tag, trainer.log_buffer.output[var], trainer.iter
-                )
+            # if isinstance(record, str):
+            #     self.writer.add_text(tag, record, trainer.iter)
+            # else:
+                # Check if the record is a list and convert to numpy array
+            if isinstance(record, list):
+                # record = np.array(record).mean()
+                self.writer.add_scalar(tag, np.array(record).mean(), trainer.iter)
+
+                self.writer.add_text(tag, str(record), trainer.iter)
+                # print(record)
+                self.writer.flush()
+            elif isinstance(record, float):
+                self.writer.add_scalar(tag, record, trainer.iter)
+# self.writer.add_scalar(record.mean())
+
 
     @master_only
     def after_run(self, trainer):

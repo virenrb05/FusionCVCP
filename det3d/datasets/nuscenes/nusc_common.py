@@ -15,6 +15,7 @@ try:
     from nuscenes.utils.geometry_utils import transform_matrix
     from nuscenes.eval.detection.config import config_factory
     from nuscenes.eval.detection.evaluate import NuScenesEval
+    # /home/vxm240030/CenterPoint/nuscenes-devkit/python-sdk/nuscenes/eval/detection/evaluate.py
 except:
     print("nuScenes devkit not Found!")
 
@@ -545,7 +546,7 @@ def quaternion_yaw(q: Quaternion) -> float:
     return yaw
 
 
-def create_nuscenes_infos(root_path, version="v1.0-trainval", nsweeps=10, filter_zero=True):
+def create_nuscenes_infos(root_path, version="v1.0-mini", nsweeps=10, filter_zero=True):
     nusc = NuScenes(version=version, dataroot=root_path, verbose=True)
     available_vers = ["v1.0-trainval", "v1.0-test", "v1.0-mini"]
     assert version in available_vers

@@ -16,3 +16,4 @@ venv/
 .vscode/
 predictions
 work_dirs
+runs

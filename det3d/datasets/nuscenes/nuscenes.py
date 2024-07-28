@@ -39,7 +39,7 @@ class NuScenesDataset(PointCloudDataset):
         pipeline=None,
         class_names=None,
         test_mode=False,
-        version="v1.0-trainval",
+        version="v1.0-mini",
         load_interval=1,
         **kwargs,
     ):

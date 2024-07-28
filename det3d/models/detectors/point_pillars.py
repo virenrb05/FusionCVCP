@@ -5,6 +5,13 @@ from .single_stage import SingleStageDetector
 from copy import deepcopy
 import torch
 from .decoder import Decoder
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+from torchmetrics import Metric
+import torch
+from ..registry import DETECTORS
+from .single_stage import SingleStageDetector
+
 
 @DETECTORS.register_module
 class PointPillars(SingleStageDetector):
@@ -28,7 +35,6 @@ class PointPillars(SingleStageDetector):
         for param in self.decoder.parameters():
             param.requires_grad = False
         self.conv3d = nn.Conv3d(in_channels=1, out_channels=384, kernel_size=(768, 3, 3), stride=(768, 1, 1), padding=(0, 1, 1)).cuda()
-
 
     def extract_feat(self, data):
         input_features = self.reader(
@@ -93,11 +99,12 @@ class PointPillars(SingleStageDetector):
         # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
         
         if return_loss:
-            return self.bbox_head.loss(example, preds, self.test_cfg)
+            return boxes, bev_fused, self.bbox_head.loss(example, preds, self.test_cfg)
         else:
             boxes = self.bbox_head.predict(example, preds, self.test_cfg)
             # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
             return boxes
+
 
 
     def forward_two_stage(self, example, return_loss=True, **kwargs):
@@ -147,6 +154,7 @@ class PointPillars(SingleStageDetector):
 
         preds, _ = self.bbox_head(bev_fused)
 
+
         # manual deepcopy ...
         new_preds = []
         for pred in preds:
@@ -160,6 +168,7 @@ class PointPillars(SingleStageDetector):
 
         # self.f1_metric(boxes, example['gt_boxes_and_cls'])
         loss = self.bbox_head.loss(example, new_preds, self.test_cfg)
+
         if return_loss:
             return boxes, bev_fused, loss
         else:
@@ -249,7 +258,7 @@ class F1Score3D(Metric):
             pred_scores.append(preds[i]["scores"])
             pred_cls.append(preds[i]['label_preds'])
 
-        PRED_SCORE_THRESHOLD = 0.0
+        PRED_SCORE_THRESHOLD = 0.1
         labels = labels.view(labels.shape[0]*labels.shape[1], labels.shape[-1])
         pred_boxes = torch.cat(pred_boxes, dim=0)[:, [0, 1, 2, 3, 4, 5, -1]]
         pred_scores = torch.cat(pred_scores, dim=0)
@@ -295,6 +304,7 @@ class F1Score3D(Metric):
 
     def calculate_tp_fp_fn_with_iou_matrix_per_class(self, preds, labels, iou_matrix, iou_threshold=0.5):
         tp = fp = fn = 0
+
         # Goal: Calculate true positives (TP), false positives (FP), and false negatives (FN)
         # TP: Predictions with IoU greater than iou_threshold for at least one label with matching class
         # FP: Ghost predictions with no matching labels (IoU < iou_threshold for all labels), and mispredictions (IoU >= iou_threshold but class does not match, or )
@@ -305,6 +315,7 @@ class F1Score3D(Metric):
         # These predictions are false positives
         unmatched_preds = torch.all(iou_matrix < iou_threshold, dim=1)
         fp += unmatched_preds.sum().item()
+
         # remove rows for these predictions from the iou matrix
         remaining_preds_mask = ~unmatched_preds
         iou_matrix = iou_matrix[remaining_preds_mask]
