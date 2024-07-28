@@ -69,10 +69,10 @@ class PointPillars(SingleStageDetector):
         
         # Reshape the tensor to combine the first two dimensions
         # Now the shape is (1, 8, 384, 360, 360)
-        input_tensor_reshaped = bev_ fused.view(1, 8, 384, 360, 360)
+        input_tensor_reshaped = bev_fused.view(1, 8, 384, 360, 360)
         
         # Define a 1x1 convolution to reduce the 8 channels back to 4 channels
-        conv1x1 = torch.nn.Conv3d( in_channels=8, out_channels=4, kernel_size=(1, 1, 1)).cuda()
+        conv1x1 = torch.nn.Conv3d(in_channels=8, out_channels=4, kernel_size=(1, 1, 1)).cuda()
         
         # Apply the convolution
         bev_fused = conv1x1(input_tensor_reshaped)
@@ -94,7 +94,7 @@ class PointPillars(SingleStageDetector):
                 
         boxes = self.bbox_head.predict(example, new_preds, self.test_cfg)
         
-        # self. f1_metric(boxes, example[ 'gt _boxes_and_cls'])
+        # self.f1_metric(boxes, example['gt_boxes_and_cls'])
         
         if return_loss:
             return boxes, bev_fused, self.bbox_head.loss(example, preds, self.test_cfg)
