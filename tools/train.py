@@ -61,7 +61,7 @@ def parse_args():
 
 
 def main():
-
+    torch.cuda.empty_cache()
     # torch.manual_seed(0)
     # torch.backends.cudnn.deterministic = True
     # torch.backends.cudnn.benchmark = False
