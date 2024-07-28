@@ -9,10 +9,11 @@ venv/
 *.so
 *.yaml
 *.sh 
-*.pth
+# *.pth
 *.pkl
 *.zip
 *.bin
 .vscode/
-work_dirs/
+predictions
+work_dirs
 runs

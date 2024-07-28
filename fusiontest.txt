@@ -1,0 +1,437 @@
+2024-07-28 13:51:45,666 - INFO - Distributed training: False
+2024-07-28 13:51:45,666 - INFO - torch.backends.cudnn.benchmark: False
+2024-07-28 13:51:45,692 - INFO - Finish RPN Initialization
+2024-07-28 13:51:45,692 - INFO - num_classes: [1]
+2024-07-28 13:51:45,697 - INFO - Finish CenterHead Initialization
+2024-07-28 13:51:46,687 - INFO - {'car': 5}
+2024-07-28 13:51:46,688 - INFO - [-1]
+2024-07-28 13:51:46,707 - INFO - load 3068 pedestrian database infos
+2024-07-28 13:51:46,707 - INFO - load 4082 car database infos
+2024-07-28 13:51:46,707 - INFO - load 773 traffic_cone database infos
+2024-07-28 13:51:46,708 - INFO - load 147 bicycle database infos
+2024-07-28 13:51:46,708 - INFO - load 1851 barrier database infos
+2024-07-28 13:51:46,708 - INFO - load 451 truck database infos
+2024-07-28 13:51:46,708 - INFO - load 337 bus database infos
+2024-07-28 13:51:46,708 - INFO - load 174 construction_vehicle database infos
+2024-07-28 13:51:46,708 - INFO - load 95 ignore database infos
+2024-07-28 13:51:46,708 - INFO - load 179 motorcycle database infos
+2024-07-28 13:51:46,708 - INFO - load 59 trailer database infos
+2024-07-28 13:51:46,714 - INFO - After filter database:
+2024-07-28 13:51:46,714 - INFO - load 3068 pedestrian database infos
+2024-07-28 13:51:46,714 - INFO - load 3303 car database infos
+2024-07-28 13:51:46,714 - INFO - load 773 traffic_cone database infos
+2024-07-28 13:51:46,714 - INFO - load 147 bicycle database infos
+2024-07-28 13:51:46,714 - INFO - load 1851 barrier database infos
+2024-07-28 13:51:46,714 - INFO - load 451 truck database infos
+2024-07-28 13:51:46,714 - INFO - load 337 bus database infos
+2024-07-28 13:51:46,714 - INFO - load 174 construction_vehicle database infos
+2024-07-28 13:51:46,714 - INFO - load 95 ignore database infos
+2024-07-28 13:51:46,714 - INFO - load 179 motorcycle database infos
+2024-07-28 13:51:46,714 - INFO - load 59 trailer database infos
+2024-07-28 13:51:46,730 - INFO - model structure: PointPillars(
+  (reader): PillarFeatureNet(
+    (pfn_layers): ModuleList(
+      (0): PFNLayer(
+        (linear): Linear(in_features=10, out_features=32, bias=False)
+        (norm): BatchNorm1d(32, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+      )
+      (1): PFNLayer(
+        (linear): Linear(in_features=64, out_features=64, bias=False)
+        (norm): BatchNorm1d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+      )
+    )
+  )
+  (backbone): PointPillarsScatter()
+  (neck): RPN(
+    (blocks): ModuleList(
+      (0): Sequential(
+        (0): ZeroPad2d((1, 1, 1, 1))
+        (1): Conv2d(64, 64, kernel_size=(3, 3), stride=(2, 2), bias=False)
+        (2): BatchNorm2d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (3): ReLU()
+        (4): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (5): BatchNorm2d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (6): ReLU()
+        (7): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (8): BatchNorm2d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (9): ReLU()
+        (10): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (11): BatchNorm2d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (12): ReLU()
+      )
+      (1): Sequential(
+        (0): ZeroPad2d((1, 1, 1, 1))
+        (1): Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), bias=False)
+        (2): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (3): ReLU()
+        (4): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (5): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (6): ReLU()
+        (7): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (8): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (9): ReLU()
+        (10): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (11): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (12): ReLU()
+        (13): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (14): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (15): ReLU()
+        (16): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (17): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (18): ReLU()
+      )
+      (2): Sequential(
+        (0): ZeroPad2d((1, 1, 1, 1))
+        (1): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), bias=False)
+        (2): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (3): ReLU()
+        (4): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (5): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (6): ReLU()
+        (7): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (8): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (9): ReLU()
+        (10): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (11): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (12): ReLU()
+        (13): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (14): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (15): ReLU()
+        (16): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (17): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (18): ReLU()
+      )
+    )
+    (deblocks): ModuleList(
+      (0): Sequential(
+        (0): Conv2d(64, 128, kernel_size=(2, 2), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+      (1): Sequential(
+        (0): Conv2d(128, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+      (2): Sequential(
+        (0): ConvTranspose2d(256, 128, kernel_size=(2, 2), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+  )
+  (bbox_head): CenterHead(
+    (crit): FastFocalLoss()
+    (crit_reg): RegLoss()
+    (shared_conv): Sequential(
+      (0): Conv2d(384, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU(inplace=True)
+    )
+    (tasks): ModuleList(
+      (0): SepHead(
+        (reg): Sequential(
+          (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (height): Sequential(
+          (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (dim): Sequential(
+          (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Conv2d(64, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (rot): Sequential(
+          (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (vel): Sequential(
+          (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (hm): Sequential(
+          (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+      )
+    )
+  )
+  (mlp): MLP(
+    (mlp): MLP(
+      (0): Linear(in_features=64, out_features=384, bias=True)
+      (1): ReLU()
+      (2): Dropout(p=0.0, inplace=False)
+      (3): Linear(in_features=384, out_features=384, bias=True)
+      (4): ReLU()
+      (5): Dropout(p=0.0, inplace=False)
+      (6): Linear(in_features=384, out_features=384, bias=True)
+      (7): ReLU()
+      (8): Dropout(p=0.0, inplace=False)
+      (9): Linear(in_features=384, out_features=384, bias=True)
+      (10): Dropout(p=0.0, inplace=False)
+    )
+  )
+  (decoder): Decoder(
+    (layers): Sequential(
+      (0): DecoderBlock(
+        (conv): Sequential(
+          (0): Upsample(scale_factor=2.0, mode='bilinear')
+          (1): Conv2d(128, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (3): ReLU(inplace=True)
+          (4): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (5): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (up): Conv2d(128, 128, kernel_size=(1, 1), stride=(1, 1))
+        (relu): ReLU(inplace=True)
+      )
+      (1): DecoderBlock(
+        (conv): Sequential(
+          (0): Upsample(scale_factor=2.0, mode='bilinear')
+          (1): Conv2d(128, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (3): ReLU(inplace=True)
+          (4): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (5): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (up): Conv2d(128, 128, kernel_size=(1, 1), stride=(1, 1))
+        (relu): ReLU(inplace=True)
+      )
+      (2): DecoderBlock(
+        (conv): Sequential(
+          (0): Upsample(scale_factor=2.0, mode='bilinear')
+          (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (3): ReLU(inplace=True)
+          (4): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (5): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (up): Conv2d(128, 64, kernel_size=(1, 1), stride=(1, 1))
+        (relu): ReLU(inplace=True)
+      )
+    )
+  )
+  (conv3d): Conv3d(1, 384, kernel_size=(768, 3, 3), stride=(768, 1, 1), padding=(0, 1, 1))
+)
+2024-07-28 13:51:46,731 - INFO - Start running, host: imren@MSIKatana15B13VEK, work_dir: /home/imren/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep
+2024-07-28 13:51:46,731 - INFO - workflow: [('train', 1)], max: 20 epochs
+no apex
+No Tensorflow
+Deformable Convolution not built!
+No APEX!
+Use HM Bias:  -2.19
+10
+2024-07-28 13:51:48,147 - INFO - finding looplift candidates
+2024-07-28 13:51:48,186 - INFO - finding looplift candidates
+2024-07-28 13:51:48,187 - INFO - finding looplift candidates
+2024-07-28 13:51:48,193 - INFO - finding looplift candidates
+2024-07-28 13:51:48,193 - INFO - finding looplift candidates
+2024-07-28 13:51:48,196 - INFO - finding looplift candidates
+2024-07-28 13:51:48,196 - INFO - finding looplift candidates
+2024-07-28 13:51:48,204 - INFO - finding looplift candidates
+2024-07-28 13:52:52,742 - INFO - Epoch [1/20][5/81]	lr: 0.00010, eta: 5:43:43, time: 12.770, data_time: 0.796, transfer_time: 0.051, forward_time: 0.626, loss_parse_time: 0.000 memory: 6144, 
+2024-07-28 13:52:52,742 - INFO - task : ['car'], loss: 16.0862, hm_loss: 7.9670, loc_loss: 32.4769, loc_loss_elem: ['3.3734', '3.9060', '6.3394', '2.8626', '2.7757', '3.1819', '5.9415', '6.4188', '3.4593', '4.1064'], num_positive: 43.2000
+
+2024-07-28 13:53:51,823 - INFO - Epoch [1/20][10/81]	lr: 0.00010, eta: 5:35:30, time: 12.236, data_time: 0.442, transfer_time: 0.439, forward_time: 0.521, loss_parse_time: 0.000 memory: 6144, 
+2024-07-28 13:53:51,823 - INFO - task : ['car'], loss: 10.5294, hm_loss: 4.8440, loc_loss: 22.7417, loc_loss_elem: ['2.4726', '2.4316', '4.0307', '2.1641', '2.0957', '2.3125', '4.6060', '5.6259', '2.6388', '2.5493'], num_positive: 38.0000
+
+2024-07-28 13:54:56,546 - INFO - Epoch [1/20][15/81]	lr: 0.00010, eta: 5:34:02, time: 12.457, data_time: 0.015, transfer_time: 0.125, forward_time: 0.961, loss_parse_time: 0.000 memory: 6435, 
+2024-07-28 13:54:56,546 - INFO - task : ['car'], loss: 7.3667, hm_loss: 3.4935, loc_loss: 15.4929, loc_loss_elem: ['1.6541', '1.6988', '2.6957', '1.5629', '1.5070', '1.4519', '3.5667', '4.0215', '1.5591', '1.8458'], num_positive: 51.2000
+
+2024-07-28 13:56:02,234 - INFO - Epoch [1/20][20/81]	lr: 0.00010, eta: 5:40:34, time: 13.624, data_time: 0.507, transfer_time: 0.718, forward_time: 1.322, loss_parse_time: 0.000 memory: 6435, 
+2024-07-28 13:56:02,234 - INFO - task : ['car'], loss: 6.5322, hm_loss: 3.6809, loc_loss: 11.4050, loc_loss_elem: ['1.4155', '1.4584', '2.0478', '1.0077', '0.8360', '1.0675', '2.4845', '4.2483', '1.0127', '1.2129'], num_positive: 36.4000
+
+2024-07-28 13:57:04,370 - INFO - Epoch [1/20][25/81]	lr: 0.00010, eta: 5:37:42, time: 12.432, data_time: 0.021, transfer_time: 0.580, forward_time: 0.931, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 13:57:04,370 - INFO - task : ['car'], loss: 5.3025, hm_loss: 3.0292, loc_loss: 9.0930, loc_loss_elem: ['0.9318', '1.2124', '1.9323', '0.6806', '0.6789', '0.7074', '1.8789', '3.8889', '0.9266', '0.8694'], num_positive: 50.2000
+
+2024-07-28 13:58:18,282 - INFO - Epoch [1/20][30/81]	lr: 0.00010, eta: 5:43:57, time: 14.359, data_time: 0.017, transfer_time: 0.691, forward_time: 1.189, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 13:58:18,282 - INFO - task : ['car'], loss: 4.3562, hm_loss: 2.7602, loc_loss: 6.3838, loc_loss_elem: ['0.5346', '0.5938', '1.3530', '0.4428', '0.4076', '0.4123', '1.5441', '3.0906', '0.9022', '0.8107'], num_positive: 51.8000
+
+2024-07-28 13:59:11,581 - INFO - Epoch [1/20][35/81]	lr: 0.00011, eta: 5:35:42, time: 11.079, data_time: 0.441, transfer_time: 0.061, forward_time: 1.108, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 13:59:11,581 - INFO - task : ['car'], loss: 4.4270, hm_loss: 2.6529, loc_loss: 7.0962, loc_loss_elem: ['0.6158', '0.8251', '1.3476', '0.4015', '0.4432', '0.4954', '2.1528', '2.7691', '1.0271', '0.9562'], num_positive: 53.4000
+
+2024-07-28 14:00:05,650 - INFO - Epoch [1/20][40/81]	lr: 0.00011, eta: 5:27:44, time: 10.613, data_time: 0.022, transfer_time: 0.059, forward_time: 0.974, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:00:05,650 - INFO - task : ['car'], loss: 4.6940, hm_loss: 3.0503, loc_loss: 6.5747, loc_loss_elem: ['0.5821', '0.7840', '1.1205', '0.2528', '0.3867', '0.3938', '2.1693', '4.9747', '0.7986', '0.8274'], num_positive: 28.2000
+
+2024-07-28 14:00:54,282 - INFO - Epoch [1/20][45/81]	lr: 0.00011, eta: 5:19:21, time: 9.926, data_time: 0.223, transfer_time: 0.054, forward_time: 0.307, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:00:54,282 - INFO - task : ['car'], loss: 4.2006, hm_loss: 2.8079, loc_loss: 5.5708, loc_loss_elem: ['0.4559', '0.5460', '1.0897', '0.2697', '0.2548', '0.2906', '2.4877', '3.3016', '0.6425', '0.8639'], num_positive: 34.0000
+
+2024-07-28 14:01:47,990 - INFO - Epoch [1/20][50/81]	lr: 0.00011, eta: 5:14:37, time: 10.741, data_time: 0.023, transfer_time: 0.059, forward_time: 1.091, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:01:47,990 - INFO - task : ['car'], loss: 4.0932, hm_loss: 2.7200, loc_loss: 5.4928, loc_loss_elem: ['0.4098', '0.4502', '1.0231', '0.2662', '0.2209', '0.2600', '2.6520', '4.5337', '0.6466', '0.7788'], num_positive: 40.8000
+
+2024-07-28 14:02:41,431 - INFO - Epoch [1/20][55/81]	lr: 0.00012, eta: 5:10:26, time: 10.687, data_time: 0.024, transfer_time: 0.254, forward_time: 0.983, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:02:41,431 - INFO - task : ['car'], loss: 3.6191, hm_loss: 2.5939, loc_loss: 4.1008, loc_loss_elem: ['0.3426', '0.3476', '0.9441', '0.1491', '0.1916', '0.1964', '1.4896', '1.7659', '0.6350', '0.6432'], num_positive: 56.0000
+
+2024-07-28 14:03:35,109 - INFO - Epoch [1/20][60/81]	lr: 0.00012, eta: 5:06:56, time: 10.739, data_time: 0.033, transfer_time: 0.260, forward_time: 0.915, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:03:35,109 - INFO - task : ['car'], loss: 3.7293, hm_loss: 2.5569, loc_loss: 4.6898, loc_loss_elem: ['0.4042', '0.3879', '0.9306', '0.1951', '0.2296', '0.2444', '1.7283', '2.7833', '0.6817', '0.7140'], num_positive: 55.0000
+
+2024-07-28 14:04:38,206 - INFO - Epoch [1/20][65/81]	lr: 0.00012, eta: 5:07:34, time: 12.617, data_time: 0.022, transfer_time: 0.456, forward_time: 1.003, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:04:38,206 - INFO - task : ['car'], loss: 3.8656, hm_loss: 2.6352, loc_loss: 4.9215, loc_loss_elem: ['0.4491', '0.3524', '1.0323', '0.1930', '0.2223', '0.3287', '1.4803', '3.1182', '0.7466', '0.6774'], num_positive: 41.6000
+
+2024-07-28 14:05:52,036 - INFO - Epoch [1/20][70/81]	lr: 0.00012, eta: 5:11:56, time: 14.772, data_time: 0.026, transfer_time: 0.854, forward_time: 1.417, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:05:52,036 - INFO - task : ['car'], loss: 3.8701, hm_loss: 2.6021, loc_loss: 5.0720, loc_loss_elem: ['0.4693', '0.3345', '1.1994', '0.2056', '0.2503', '0.2238', '1.5632', '2.8873', '0.6292', '0.8699'], num_positive: 47.0000
+
+2024-07-28 14:06:54,166 - INFO - Epoch [1/20][75/81]	lr: 0.00013, eta: 5:11:31, time: 12.419, data_time: 0.018, transfer_time: 0.429, forward_time: 1.043, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:06:54,166 - INFO - task : ['car'], loss: 3.7204, hm_loss: 2.6802, loc_loss: 4.1610, loc_loss_elem: ['0.3211', '0.3554', '0.9272', '0.1326', '0.1694', '0.1582', '1.6490', '2.8004', '0.5552', '0.6520'], num_positive: 42.0000
+
+2024-07-28 14:08:21,374 - INFO - Epoch [1/20][80/81]	lr: 0.00013, eta: 5:18:46, time: 17.246, data_time: 0.025, transfer_time: 1.289, forward_time: 1.916, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:08:21,375 - INFO - task : ['car'], loss: 3.7643, hm_loss: 2.6753, loc_loss: 4.3562, loc_loss_elem: ['0.2864', '0.2851', '0.7622', '0.1729', '0.1278', '0.1609', '1.5801', '4.8153', '0.5230', '0.7589'], num_positive: 37.8000
+
+2024-07-28 14:08:30,506 - INFO - finding looplift candidates
+2024-07-28 14:08:30,507 - INFO - finding looplift candidates
+2024-07-28 14:08:30,508 - INFO - finding looplift candidates
+2024-07-28 14:08:30,512 - INFO - finding looplift candidates
+2024-07-28 14:08:30,520 - INFO - finding looplift candidates
+2024-07-28 14:08:30,520 - INFO - finding looplift candidates
+2024-07-28 14:08:30,526 - INFO - finding looplift candidates
+2024-07-28 14:08:30,528 - INFO - finding looplift candidates
+2024-07-28 14:09:34,638 - INFO - Epoch [2/20][5/81]	lr: 0.00014, eta: 5:15:16, time: 13.390, data_time: 1.151, transfer_time: 0.490, forward_time: 0.672, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:09:34,639 - INFO - task : ['car'], loss: 3.8161, hm_loss: 2.6698, loc_loss: 4.5853, loc_loss_elem: ['0.3051', '0.3397', '0.9935', '0.1274', '0.1141', '0.1555', '1.9257', '3.7817', '0.6785', '0.7300'], num_positive: 40.4000
+
+2024-07-28 14:10:25,461 - INFO - Epoch [2/20][10/81]	lr: 0.00014, eta: 5:11:13, time: 10.169, data_time: 0.027, transfer_time: 0.061, forward_time: 0.679, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:10:25,461 - INFO - task : ['car'], loss: 3.6817, hm_loss: 2.6217, loc_loss: 4.2398, loc_loss_elem: ['0.2744', '0.3123', '0.9337', '0.1378', '0.1287', '0.1407', '1.9008', '2.7956', '0.6396', '0.7333'], num_positive: 40.0000
+
+2024-07-28 14:11:27,160 - INFO - Epoch [2/20][15/81]	lr: 0.00015, eta: 5:10:22, time: 12.337, data_time: 0.016, transfer_time: 0.438, forward_time: 1.038, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:11:27,160 - INFO - task : ['car'], loss: 3.7636, hm_loss: 2.6456, loc_loss: 4.4722, loc_loss_elem: ['0.3189', '0.3700', '1.0199', '0.1633', '0.1737', '0.2090', '1.5249', '2.4259', '0.5731', '0.8541'], num_positive: 42.6000
+
+2024-07-28 14:12:28,993 - INFO - Epoch [2/20][20/81]	lr: 0.00015, eta: 5:09:32, time: 12.368, data_time: 0.021, transfer_time: 0.657, forward_time: 0.837, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:12:28,993 - INFO - task : ['car'], loss: 3.5447, hm_loss: 2.5461, loc_loss: 3.9946, loc_loss_elem: ['0.2881', '0.2894', '0.8398', '0.1323', '0.1737', '0.1393', '1.6184', '2.6957', '0.6034', '0.6659'], num_positive: 42.8000
+
+2024-07-28 14:13:30,619 - INFO - Epoch [2/20][25/81]	lr: 0.00016, eta: 5:08:07, time: 11.900, data_time: 0.021, transfer_time: 0.062, forward_time: 0.976, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:13:30,619 - INFO - task : ['car'], loss: 3.6880, hm_loss: 2.6541, loc_loss: 4.1354, loc_loss_elem: ['0.2912', '0.3711', '0.8256', '0.1883', '0.1738', '0.1533', '1.5610', '3.1667', '0.5308', '0.6559'], num_positive: 38.2000
+
+2024-07-28 14:14:33,429 - INFO - Epoch [2/20][30/81]	lr: 0.00016, eta: 5:07:59, time: 12.986, data_time: 0.447, transfer_time: 0.435, forward_time: 1.005, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:14:33,430 - INFO - task : ['car'], loss: 3.8735, hm_loss: 2.7304, loc_loss: 4.5725, loc_loss_elem: ['0.2839', '0.2777', '0.9618', '0.1526', '0.1512', '0.1446', '1.9499', '4.6293', '0.5532', '0.7317'], num_positive: 30.6000
+
+2024-07-28 14:15:34,980 - INFO - Epoch [2/20][35/81]	lr: 0.00017, eta: 5:07:02, time: 12.314, data_time: 0.023, transfer_time: 0.660, forward_time: 0.832, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:15:34,980 - INFO - task : ['car'], loss: 3.5771, hm_loss: 2.5111, loc_loss: 4.2637, loc_loss_elem: ['0.3077', '0.3609', '0.9960', '0.1314', '0.1661', '0.1596', '2.0012', '2.1642', '0.6730', '0.6358'], num_positive: 50.8000
+
+2024-07-28 14:16:40,754 - INFO - Epoch [2/20][40/81]	lr: 0.00017, eta: 5:06:57, time: 13.153, data_time: 0.019, transfer_time: 0.659, forward_time: 0.935, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:16:40,754 - INFO - task : ['car'], loss: 3.5420, hm_loss: 2.5718, loc_loss: 3.8806, loc_loss_elem: ['0.2557', '0.2870', '0.9030', '0.0986', '0.1645', '0.1302', '1.7079', '2.3716', '0.6150', '0.6106'], num_positive: 43.0000
+
+2024-07-28 14:18:00,316 - INFO - Epoch [2/20][45/81]	lr: 0.00018, eta: 5:09:30, time: 15.908, data_time: 0.021, transfer_time: 0.834, forward_time: 2.190, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:18:00,316 - INFO - task : ['car'], loss: 3.5602, hm_loss: 2.5422, loc_loss: 4.0720, loc_loss_elem: ['0.2917', '0.2559', '0.7732', '0.1087', '0.1309', '0.1045', '1.4943', '4.2531', '0.5583', '0.6993'], num_positive: 44.4000
+
+2024-07-28 14:19:00,246 - INFO - Epoch [2/20][50/81]	lr: 0.00019, eta: 5:07:42, time: 11.619, data_time: 0.025, transfer_time: 0.057, forward_time: 0.632, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:19:00,246 - INFO - task : ['car'], loss: 3.7328, hm_loss: 2.6538, loc_loss: 4.3160, loc_loss_elem: ['0.2955', '0.3295', '1.0244', '0.1391', '0.2185', '0.1487', '1.6797', '2.7172', '0.6122', '0.6688'], num_positive: 37.8000
+
+2024-07-28 14:37:54,906 - INFO - Epoch [2/20][55/81]	lr: 0.00019, eta: 8:22:05, time: 227.300, data_time: 0.394, transfer_time: 0.577, forward_time: 1.416, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:37:54,907 - INFO - task : ['car'], loss: 3.5784, hm_loss: 2.3979, loc_loss: 4.7222, loc_loss_elem: ['0.4024', '0.4253', '1.1316', '0.1898', '0.2133', '0.2252', '0.9078', '2.5070', '0.7176', '0.7341'], num_positive: 61.2000
+
+2024-07-28 14:38:45,756 - INFO - Epoch [2/20][60/81]	lr: 0.00020, eta: 8:11:32, time: 10.175, data_time: 0.026, transfer_time: 0.276, forward_time: 0.542, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:38:45,756 - INFO - task : ['car'], loss: 3.4240, hm_loss: 2.4187, loc_loss: 4.0210, loc_loss_elem: ['0.3219', '0.3207', '0.8416', '0.1559', '0.1648', '0.1372', '1.4078', '2.6314', '0.6516', '0.6195'], num_positive: 53.0000
+
+2024-07-28 14:39:50,994 - INFO - Epoch [2/20][65/81]	lr: 0.00021, eta: 8:04:04, time: 13.042, data_time: 0.021, transfer_time: 0.467, forward_time: 1.415, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:39:50,994 - INFO - task : ['car'], loss: 3.5839, hm_loss: 2.5813, loc_loss: 4.0104, loc_loss_elem: ['0.3013', '0.2685', '0.9046', '0.1235', '0.1299', '0.1176', '1.4278', '3.1625', '0.5272', '0.7198'], num_positive: 39.8000
+
+2024-07-28 14:41:15,444 - INFO - Epoch [2/20][70/81]	lr: 0.00021, eta: 7:59:44, time: 16.389, data_time: 0.026, transfer_time: 1.097, forward_time: 1.426, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:41:15,444 - INFO - task : ['car'], loss: 3.4052, hm_loss: 2.3972, loc_loss: 4.0321, loc_loss_elem: ['0.3143', '0.2821', '0.8765', '0.1081', '0.1641', '0.1307', '1.0810', '3.3825', '0.5676', '0.6960'], num_positive: 54.8000
+
+2024-07-28 14:42:06,521 - INFO - Epoch [2/20][75/81]	lr: 0.00022, eta: 7:51:10, time: 10.719, data_time: 0.527, transfer_time: 0.064, forward_time: 0.692, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:42:06,521 - INFO - task : ['car'], loss: 3.5484, hm_loss: 2.5108, loc_loss: 4.1504, loc_loss_elem: ['0.2968', '0.3413', '0.7755', '0.1795', '0.1750', '0.1401', '1.3550', '3.7565', '0.4668', '0.7530'], num_positive: 42.2000
+
+2024-07-28 14:43:11,654 - INFO - Epoch [2/20][80/81]	lr: 0.00023, eta: 7:44:40, time: 12.832, data_time: 0.023, transfer_time: 0.452, forward_time: 1.258, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:43:11,654 - INFO - task : ['car'], loss: 3.5507, hm_loss: 2.5272, loc_loss: 4.0938, loc_loss_elem: ['0.2653', '0.3173', '0.8206', '0.1434', '0.1630', '0.1275', '1.4170', '3.7995', '0.4618', '0.7516'], num_positive: 41.4000
+
+2024-07-28 14:43:21,223 - INFO - finding looplift candidates
+2024-07-28 14:43:21,224 - INFO - finding looplift candidates
+2024-07-28 14:43:21,225 - INFO - finding looplift candidates
+2024-07-28 14:43:21,225 - INFO - finding looplift candidates
+2024-07-28 14:43:21,225 - INFO - finding looplift candidates
+2024-07-28 14:43:21,230 - INFO - finding looplift candidates
+2024-07-28 14:43:21,233 - INFO - finding looplift candidates
+2024-07-28 14:43:21,237 - INFO - finding looplift candidates
+2024-07-28 14:44:35,119 - INFO - Epoch [3/20][5/81]	lr: 0.00024, eta: 7:37:03, time: 15.069, data_time: 1.327, transfer_time: 0.427, forward_time: 0.949, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:44:35,119 - INFO - task : ['car'], loss: 3.6111, hm_loss: 2.5373, loc_loss: 4.2951, loc_loss_elem: ['0.3097', '0.2975', '0.8859', '0.1079', '0.1900', '0.1718', '1.3872', '3.5887', '0.5404', '0.7967'], num_positive: 48.0000
+
+2024-07-28 14:45:57,014 - INFO - Epoch [3/20][10/81]	lr: 0.00025, eta: 7:33:44, time: 16.386, data_time: 0.401, transfer_time: 0.870, forward_time: 1.229, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:45:57,014 - INFO - task : ['car'], loss: 3.4160, hm_loss: 2.4256, loc_loss: 3.9616, loc_loss_elem: ['0.2959', '0.2935', '0.9479', '0.1314', '0.1716', '0.1656', '1.2279', '2.2640', '0.6582', '0.5990'], num_positive: 48.8000
+
+2024-07-28 14:47:10,259 - INFO - Epoch [3/20][15/81]	lr: 0.00025, eta: 7:29:21, time: 14.645, data_time: 0.387, transfer_time: 0.567, forward_time: 1.200, loss_parse_time: 0.000 memory: 6545, 
+2024-07-28 14:47:10,260 - INFO - task : ['car'], loss: 3.6195, hm_loss: 2.5213, loc_loss: 4.3928, loc_loss_elem: ['0.3044', '0.2868', '0.8026', '0.1090', '0.1260', '0.1367', '2.1401', '4.5935', '0.5293', '0.7511'], num_positive: 36.2000
+
+2024-07-28 14:48:20,727 - INFO - Epoch [3/20][20/81]	lr: 0.00026, eta: 7:25:01, time: 14.469, data_time: 0.396, transfer_time: 0.967, forward_time: 0.799, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:48:20,727 - INFO - task : ['car'], loss: 3.6074, hm_loss: 2.4820, loc_loss: 4.5016, loc_loss_elem: ['0.3537', '0.3042', '0.8076', '0.1305', '0.1499', '0.1633', '1.7574', '4.7492', '0.5621', '0.7289'], num_positive: 44.0000
+
+2024-07-28 14:49:20,858 - INFO - Epoch [3/20][25/81]	lr: 0.00027, eta: 7:19:17, time: 12.023, data_time: 0.019, transfer_time: 0.464, forward_time: 0.587, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:49:20,858 - INFO - task : ['car'], loss: 3.6966, hm_loss: 2.4158, loc_loss: 5.1232, loc_loss_elem: ['0.5833', '0.3768', '1.1008', '0.2325', '0.2460', '0.2576', '1.1367', '2.8920', '0.6184', '0.9020'], num_positive: 47.4000
+
+2024-07-28 14:50:19,752 - INFO - Epoch [3/20][30/81]	lr: 0.00028, eta: 7:13:39, time: 11.786, data_time: 0.023, transfer_time: 0.442, forward_time: 0.521, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:50:19,752 - INFO - task : ['car'], loss: 3.3110, hm_loss: 2.2924, loc_loss: 4.0745, loc_loss_elem: ['0.3156', '0.3130', '0.9554', '0.1530', '0.1568', '0.1610', '1.3996', '2.1656', '0.6911', '0.6155'], num_positive: 56.0000
+
+2024-07-28 14:51:25,197 - INFO - Epoch [3/20][35/81]	lr: 0.00029, eta: 7:08:48, time: 12.675, data_time: 0.016, transfer_time: 0.069, forward_time: 1.411, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:51:25,197 - INFO - task : ['car'], loss: 3.6532, hm_loss: 2.5722, loc_loss: 4.3240, loc_loss_elem: ['0.3182', '0.2910', '0.9910', '0.1273', '0.1252', '0.1879', '1.6424', '3.3417', '0.5860', '0.7005'], num_positive: 42.4000
+
+2024-07-28 14:52:19,125 - INFO - Epoch [3/20][40/81]	lr: 0.00030, eta: 7:03:16, time: 11.194, data_time: 0.429, transfer_time: 0.056, forward_time: 1.111, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:52:19,125 - INFO - task : ['car'], loss: 3.8551, hm_loss: 2.5269, loc_loss: 5.3128, loc_loss_elem: ['0.4518', '0.4490', '1.4118', '0.1792', '0.2351', '0.1526', '1.6966', '2.5221', '0.8434', '0.7462'], num_positive: 42.8000
+
+2024-07-28 14:53:12,259 - INFO - Epoch [3/20][45/81]	lr: 0.00031, eta: 6:57:38, time: 10.625, data_time: 0.021, transfer_time: 0.254, forward_time: 0.962, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:53:12,259 - INFO - task : ['car'], loss: 3.4091, hm_loss: 2.4060, loc_loss: 4.0125, loc_loss_elem: ['0.2763', '0.3509', '0.9457', '0.1583', '0.2263', '0.1854', '1.1772', '1.5667', '0.6444', '0.6766'], num_positive: 43.8000
+
+2024-07-28 14:54:22,400 - INFO - Epoch [3/20][50/81]	lr: 0.00032, eta: 6:54:06, time: 14.029, data_time: 0.023, transfer_time: 0.821, forward_time: 0.842, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:54:22,401 - INFO - task : ['car'], loss: 3.4885, hm_loss: 2.4645, loc_loss: 4.0961, loc_loss_elem: ['0.2982', '0.3113', '0.7730', '0.1754', '0.1190', '0.1607', '1.4758', '3.6300', '0.5081', '0.7294'], num_positive: 40.6000
+
+2024-07-28 14:55:22,375 - INFO - Epoch [3/20][55/81]	lr: 0.00032, eta: 6:49:22, time: 11.586, data_time: 0.022, transfer_time: 0.054, forward_time: 0.630, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:55:22,375 - INFO - task : ['car'], loss: 3.7809, hm_loss: 2.4984, loc_loss: 5.1301, loc_loss_elem: ['0.4841', '0.3959', '1.0552', '0.3470', '0.2891', '0.2717', '1.8239', '2.3347', '0.6829', '0.7723'], num_positive: 44.6000
+
+2024-07-28 14:56:26,830 - INFO - Epoch [3/20][60/81]	lr: 0.00033, eta: 6:45:42, time: 13.303, data_time: 0.432, transfer_time: 0.664, forward_time: 1.207, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:56:26,830 - INFO - task : ['car'], loss: 3.5859, hm_loss: 2.4872, loc_loss: 4.3946, loc_loss_elem: ['0.3018', '0.3064', '0.8577', '0.1332', '0.1823', '0.1887', '1.3135', '4.5582', '0.5077', '0.7425'], num_positive: 40.6000
+
+2024-07-28 14:57:17,964 - INFO - Epoch [3/20][65/81]	lr: 0.00034, eta: 6:40:28, time: 10.029, data_time: 0.025, transfer_time: 0.058, forward_time: 0.545, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 14:57:17,964 - INFO - task : ['car'], loss: 3.3639, hm_loss: 2.3471, loc_loss: 4.0674, loc_loss_elem: ['0.3453', '0.2964', '0.9383', '0.1133', '0.1724', '0.1670', '1.5650', '2.1996', '0.6617', '0.6203'], num_positive: 46.4000
+
+2024-07-28 15:10:39,744 - INFO - Epoch [3/20][70/81]	lr: 0.00035, eta: 7:50:29, time: 160.552, data_time: 0.218, transfer_time: 0.064, forward_time: 0.791, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 15:10:39,748 - INFO - task : ['car'], loss: 3.4846, hm_loss: 2.4132, loc_loss: 4.2856, loc_loss_elem: ['0.3715', '0.3244', '0.8994', '0.1467', '0.1808', '0.1753', '1.7026', '2.7531', '0.5930', '0.7034'], num_positive: 43.0000
+
+2024-07-28 15:11:35,988 - INFO - Epoch [3/20][75/81]	lr: 0.00036, eta: 7:44:22, time: 11.247, data_time: 0.022, transfer_time: 0.485, forward_time: 1.196, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 15:11:35,988 - INFO - task : ['car'], loss: 3.4244, hm_loss: 2.4545, loc_loss: 3.8800, loc_loss_elem: ['0.2837', '0.2696', '0.8509', '0.1568', '0.1880', '0.1543', '1.0082', '2.9609', '0.5478', '0.6350'], num_positive: 45.6000
+
+2024-07-28 15:12:37,017 - INFO - Epoch [3/20][80/81]	lr: 0.00037, eta: 7:38:54, time: 12.177, data_time: 0.024, transfer_time: 0.572, forward_time: 0.609, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 15:12:37,019 - INFO - task : ['car'], loss: 3.6716, hm_loss: 2.5143, loc_loss: 4.6290, loc_loss_elem: ['0.2767', '0.3038', '0.8525', '0.1978', '0.2291', '0.1642', '2.4399', '4.3276', '0.5717', '0.6797'], num_positive: 34.2000
+
+2024-07-28 15:12:46,227 - INFO - finding looplift candidates
+2024-07-28 15:12:46,232 - INFO - finding looplift candidates
+2024-07-28 15:12:46,235 - INFO - finding looplift candidates
+2024-07-28 15:12:46,238 - INFO - finding looplift candidates
+2024-07-28 15:12:46,239 - INFO - finding looplift candidates
+2024-07-28 15:12:46,239 - INFO - finding looplift candidates
+2024-07-28 15:12:46,240 - INFO - finding looplift candidates
+2024-07-28 15:12:46,248 - INFO - finding looplift candidates
+2024-07-28 15:13:42,135 - INFO - Epoch [4/20][5/81]	lr: 0.00039, eta: 7:31:18, time: 11.826, data_time: 1.400, transfer_time: 0.061, forward_time: 0.835, loss_parse_time: 0.000 memory: 6558, 
+2024-07-28 15:13:42,135 - INFO - task : ['car'], loss: 3.4970, hm_loss: 2.3812, loc_loss: 4.4635, loc_loss_elem: ['0.3083', '0.3099', '0.9926', '0.1361', '0.1503', '0.1413', '1.6280', '3.9076', '0.6205', '0.6973'], num_positive: 39.6000
+
+Traceback (most recent call last):
+  File "./tools/train.py", line 168, in <module>
+    main()
+  File "./tools/train.py", line 157, in main
+    train_detector(
+  File "/home/imren/CenterPoint/det3d/torchie/apis/train.py", line 326, in train_detector
+    trainer.run(data_loaders, cfg.workflow, cfg.total_epochs, local_rank=cfg.local_rank)
+  File "/home/imren/CenterPoint/det3d/torchie/trainer/trainer.py", line 542, in run
+    epoch_runner(data_loaders[i], self.epoch, **kwargs)
+  File "/home/imren/CenterPoint/det3d/torchie/trainer/trainer.py", line 417, in train
+    self.call_hook("after_train_iter")
+  File "/home/imren/CenterPoint/det3d/torchie/trainer/trainer.py", line 330, in call_hook
+    getattr(hook, fn_name)(self)
+  File "/home/imren/CenterPoint/det3d/torchie/trainer/hooks/optimizer.py", line 18, in after_train_iter
+    trainer.outputs["loss"].backward()
+  File "/home/imren/miniconda3/envs/cvcp/lib/python3.8/site-packages/torch/_tensor.py", line 525, in backward
+    torch.autograd.backward(
+  File "/home/imren/miniconda3/envs/cvcp/lib/python3.8/site-packages/torch/autograd/__init__.py", line 267, in backward
+    _engine_run_backward(
+  File "/home/imren/miniconda3/envs/cvcp/lib/python3.8/site-packages/torch/autograd/graph.py", line 744, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
