@@ -51,16 +51,55 @@ class PointPillars(SingleStageDetector):
         )
 
         x = self.extract_feat(data)
-        pred_boxes, _ = self.bbox_head(x)
+        ctp_bev = x
 
-        preds = self.bbox_head.predict(example, pred_boxes, self.test_cfg)
+        # fusion
+        cvt_bev = torch.tensor([]).cuda()
+        for batch in example['metadata']:
+            bev_loaded_batch = torch.load(f"./predictions/{batch['token']}.pt").cuda()
+            cvt_bev = torch.cat((cvt_bev, bev_loaded_batch), dim=0)
+
+        # interpolate cvt_bev to match sizes
+        cvt_bev = self.mlp(cvt_bev)
+        import torch.nn. functional as F
+        cvt_bev = F.interpolate(cvt_bev, size=(360, 360))
         
-        self.f1_metric(preds, example['gt_boxes_and_cls'])
-
+        # fuse
+        bev_fused = torch.stack((cvt_bev, ctp_bev))
+        
+        # Reshape the tensor to combine the first two dimensions
+        # Now the shape is (1, 8, 384, 360, 360)
+        input_tensor_reshaped = bev_ fused.view(1, 8, 384, 360, 360)
+        
+        # Define a 1x1 convolution to reduce the 8 channels back to 4 channels
+        conv1x1 = torch.nn.Conv3d( in_channels=8, out_channels=4, kernel_size=(1, 1, 1)).cuda()
+        
+        # Apply the convolution
+        bev_fused = conv1x1(input_tensor_reshaped)
+        
+        # Remove the singleton dimension
+        # Now the shape is (4, 384, 360, 360)
+        bev_fused = bev_fused.squeeze(0)
+        
+        preds, _ = self.bbox_head(bev_fused)
+        
+        # manual deepcopy ...
+        new_preds = []
+        for pred in preds:
+            new_pred = {}
+            for k, v in pred.items():
+                new_pred[k] = v.detach()
+                
+            new_preds.append(new_pred)
+                
+        boxes = self.bbox_head.predict(example, new_preds, self.test_cfg)
+        
+        # self. f1_metric(boxes, example[ 'gt _boxes_and_cls'])
+        
         if return_loss:
-            return self.bbox_head.loss(example, pred_boxes, self.test_cfg)
+            return boxes, bev_fused, self.bbox_head.loss(example, preds, self.test_cfg)
         else:
-            return preds
+            return boxes, bev_fused, None
 
     def forward_two_stage(self, example, return_loss=True, **kwargs):
         voxels = example["voxels"]
