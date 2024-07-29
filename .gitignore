@@ -17,3 +17,4 @@ venv/
 predictions
 work_dirs
 runs
+nuscenes

@@ -1,0 +1,30 @@
+/home/imren/CenterPoint/det3d/core/bbox/geometry.py:149: NumbaDeprecationWarning: [1mThe keyword argument 'nopython=False' was supplied. From Numba 0.59.0 the default is being changed to True and use of 'nopython=False' will raise a warning as the argument will have no effect. See https://numba.readthedocs.io/en/stable/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit for details.[0m
+  @numba.jit(nopython=False)
+/home/imren/CenterPoint/det3d/core/bbox/geometry.py:162: NumbaDeprecationWarning: [1mThe keyword argument 'nopython=False' was supplied. From Numba 0.59.0 the default is being changed to True and use of 'nopython=False' will raise a warning as the argument will have no effect. See https://numba.readthedocs.io/en/stable/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit for details.[0m
+  @numba.jit(nopython=False)
+no apex
+No Tensorflow
+Traceback (most recent call last):
+  File "tools/create_data.py", line 35, in <module>
+    fire.Fire()
+  File "/home/imren/miniconda3/envs/cvcp/lib/python3.8/site-packages/fire/core.py", line 143, in Fire
+    component_trace = _Fire(component, args, parsed_flag_args, context, name)
+  File "/home/imren/miniconda3/envs/cvcp/lib/python3.8/site-packages/fire/core.py", line 477, in _Fire
+    component, remaining_args = _CallAndUpdateTrace(
+  File "/home/imren/miniconda3/envs/cvcp/lib/python3.8/site-packages/fire/core.py", line 693, in _CallAndUpdateTrace
+    component = fn(*varargs, **kwargs)
+  File "tools/create_data.py", line 14, in nuscenes_data_prep
+    create_groundtruth_database(
+  File "/home/imren/CenterPoint/det3d/datasets/utils/create_gt_database.py", line 36, in create_groundtruth_database
+    dataset = get_dataset(dataset_class_name)(
+  File "/home/imren/CenterPoint/det3d/datasets/nuscenes/nuscenes.py", line 47, in __init__
+    super(NuScenesDataset, self).__init__(
+  File "/home/imren/CenterPoint/det3d/datasets/custom.py", line 37, in __init__
+    self._set_group_flag()
+  File "/home/imren/CenterPoint/det3d/datasets/custom.py", line 164, in _set_group_flag
+    self.flag = np.ones(len(self), dtype=np.uint8)
+  File "/home/imren/CenterPoint/det3d/datasets/nuscenes/nuscenes.py", line 125, in __len__
+    self.load_infos(self._info_path)
+  File "/home/imren/CenterPoint/det3d/datasets/nuscenes/nuscenes.py", line 79, in load_infos
+    _nusc_infos_all = pickle.load(f)
+EOFError: Ran out of input

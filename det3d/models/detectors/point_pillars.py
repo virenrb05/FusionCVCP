@@ -99,7 +99,7 @@ class PointPillars(SingleStageDetector):
         # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
         
         if return_loss:
-            return boxes, bev_fused, self.bbox_head.loss(example, preds, self.test_cfg)
+            return self.bbox_head.loss(example, preds, self.test_cfg)
         else:
             boxes = self.bbox_head.predict(example, preds, self.test_cfg)
             # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
@@ -142,11 +142,11 @@ class PointPillars(SingleStageDetector):
         bev_fused = torch.cat((cvt_bev, ctp_bev), dim=1).contiguous()
 
         # Define a 1x1 convolution to reduce the 8 channels back to 4 channels
-        conv1x1 = torch.nn.Conv2d(
-            in_channels=bev_fused.shape[0], out_channels=exa, kernel_size=(1, 1, 1)).cuda()
+        # conv1x1 = torch.nn.Conv2d(
+        #     in_channels=bev_fused.shape[0], out_channels=exa, kernel_size=(1, 1, 1)).cuda()
 
         # Apply the convolution
-        bev_fused = conv1x1(bev_fused)
+        # bev_fused = conv1x1(bev_fused)
 
         # Remove the singleton dimension
         # Now the shape is (4, 384, 360, 360)
