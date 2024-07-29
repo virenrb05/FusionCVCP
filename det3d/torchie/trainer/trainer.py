@@ -36,8 +36,9 @@ def example_to_device(example, device, non_blocking=False) -> dict:
     float_names = ["voxels", "bev_map"]
     for k, v in example.items():
         if k in ["anchors", "anchors_mask", "reg_targets", "reg_weights", "labels", "hm",
-                "anno_box", "ind", "mask", 'cat', 'points']:
-            example_torch[k] = [res.to(device, non_blocking=non_blocking) for res in v]
+                 "anno_box", "ind", "mask", 'cat', 'points']:
+            example_torch[k] = [
+                res.to(device, non_blocking=non_blocking) for res in v]
         elif k in [
             "voxels",
             "bev_map",
@@ -288,7 +289,8 @@ class Trainer(object):
 
     def current_lr(self):
         if self.optimizer is None:
-            raise RuntimeError("lr is not applicable because optimizer does not exist.")
+            raise RuntimeError(
+                "lr is not applicable because optimizer does not exist.")
         return [group["lr"] for group in self.optimizer.param_groups]
 
     def register_hook(self, hook, priority="NORMAL"):
@@ -364,19 +366,19 @@ class Trainer(object):
         self.call_hook("after_data_to_device")
 
         if train_mode:
-            losses, f1 = model(example, return_loss=True)
+            losses = model(example, return_loss=True)
             self.call_hook("after_forward")
             loss, log_vars = parse_second_losses(losses)
             del losses
 
             outputs = dict(
-                loss=loss, log_vars=log_vars, num_samples=-1, f1=f1   # TODO: FIX THIS
+                loss=loss, log_vars=log_vars, num_samples=-1   # TODO: FIX THIS
             )
             self.call_hook("after_parse_loss")
 
             return outputs
         else:
-            return model(example, return_loss=False) # boxes, f1
+            return model(example, return_loss=False)  # boxes
 
     def train(self, data_loader, epoch, **kwargs):
 
@@ -394,7 +396,7 @@ class Trainer(object):
         for i, data_batch in enumerate(data_loader):
             global_step = base_step + i
             if self.lr_scheduler is not None:
-                #print(global_step)
+                # print(global_step)
                 self.lr_scheduler.step(global_step)
 
             self._inner_iter = i
@@ -412,8 +414,9 @@ class Trainer(object):
             if not isinstance(outputs, dict):
                 raise TypeError("batch_processor() must return a dict")
             if "log_vars" in outputs:
-                outputs["log_vars"]["f1"] = outputs["f1"].item()
-                self.log_buffer.update(outputs["log_vars"], outputs["num_samples"])
+                # outputs["log_vars"]["f1"] = outputs["f1"].item()
+                self.log_buffer.update(
+                    outputs["log_vars"], outputs["num_samples"])
             self.outputs = outputs
             self.call_hook("after_train_iter")
             self._iter += 1
@@ -450,7 +453,7 @@ class Trainer(object):
                     ]:
                         output[k] = v.to(cpu_device)
                 detections.update(
-                    {token: output,}
+                    {token: output, }
                 )
                 if self.rank == 0:
                     for _ in range(self.world_size):
@@ -482,10 +485,12 @@ class Trainer(object):
     def resume(self, checkpoint, resume_optimizer=True, map_location="default"):
         if map_location == "default":
             checkpoint = self.load_checkpoint(
-                checkpoint , map_location='cuda:{}'.format(torch.cuda.current_device()) # TODO: FIX THIS!!
+                checkpoint, map_location='cuda:{}'.format(
+                    torch.cuda.current_device())  # TODO: FIX THIS!!
             )
         else:
-            checkpoint = self.load_checkpoint(checkpoint, map_location=map_location)
+            checkpoint = self.load_checkpoint(
+                checkpoint, map_location=map_location)
 
         self._epoch = checkpoint["meta"]["epoch"]
         self._iter = checkpoint["meta"]["iter"]

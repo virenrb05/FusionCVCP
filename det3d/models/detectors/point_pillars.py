@@ -11,7 +11,7 @@ from torchmetrics import Metric
 import torch
 from ..registry import DETECTORS
 from .single_stage import SingleStageDetector
-
+import torch.nn.functional as F
 
 @DETECTORS.register_module
 class PointPillars(SingleStageDetector):
@@ -34,7 +34,7 @@ class PointPillars(SingleStageDetector):
         self.decoder.load_state_dict(torch.load('./decoder.pth'))
         for param in self.decoder.parameters():
             param.requires_grad = False
-        self.conv3d = nn.Conv3d(in_channels=1, out_channels=384, kernel_size=(768, 3, 3), stride=(768, 1, 1), padding=(0, 1, 1)).cuda()
+        self.conv3d = nn.Conv3d(in_channels=1, out_channels=384, kernel_size=(768, 3, 3), stride=(768, 1, 1), padding=(0, 1, 1))
 
     def extract_feat(self, data):
         input_features = self.reader(
@@ -67,16 +67,15 @@ class PointPillars(SingleStageDetector):
         ctp_bev = x
 
         # fusion
-        cvt_bev = torch.tensor([]).cuda()
+        cvt_bev = torch.tensor([]).to(x.device)
         for batch in example['metadata']:
             bev_loaded_batch = torch.load(
-                f"./predictions/{batch['token']}.pth").cuda()
+                f"/home/vxm240030/CenterPoint/predictions/{batch['token']}.pth").to(x.device)
             cvt_bev = torch.cat((cvt_bev, bev_loaded_batch), dim=0)
         cvt_bev = self.decoder(cvt_bev)
 
         # interpolate cvt_bev to match sizes
         cvt_bev = self.mlp(cvt_bev)
-        import torch.nn.functional as F
         cvt_bev = F.interpolate(cvt_bev, size=(128, 128))
 
         # fuse
@@ -99,7 +98,7 @@ class PointPillars(SingleStageDetector):
         # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
         
         if return_loss:
-            return boxes, bev_fused, self.bbox_head.loss(example, preds, self.test_cfg)
+            return self.bbox_head.loss(example, preds, self.test_cfg)
         else:
             boxes = self.bbox_head.predict(example, preds, self.test_cfg)
             # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
@@ -130,27 +129,23 @@ class PointPillars(SingleStageDetector):
         cvt_bev = torch.tensor([]).cuda()
         for batch in example['metadata']:
             bev_loaded_batch = torch.load(
-                f"./predictions/{batch['token']}.pt").cuda()
+                f"./predictions/{batch['token']}.pth").cuda()
             cvt_bev = torch.cat((cvt_bev, bev_loaded_batch), dim=0)
+        cvt_bev = self.decoder(cvt_bev)
 
         # interpolate cvt_bev to match sizes
         cvt_bev = self.mlp(cvt_bev)
-        import torch.nn. functional as F
         cvt_bev = F.interpolate(cvt_bev, size=(360, 360))
 
-        # fuse
         bev_fused = torch.cat((cvt_bev, ctp_bev), dim=1).contiguous()
-
-        # Define a 1x1 convolution to reduce the 8 channels back to 4 channels
-        conv1x1 = torch.nn.Conv2d(
-            in_channels=bev_fused.shape[0], out_channels=exa, kernel_size=(1, 1, 1)).cuda()
-
+        bev_fused = bev_fused.unsqueeze(1) # Bx1xDxHxW
+                
         # Apply the convolution
-        bev_fused = conv1x1(bev_fused)
+        bev_fused = self.conv3d(bev_fused) # Bx128x1xHxW
 
         # Remove the singleton dimension
-        # Now the shape is (4, 384, 360, 360)
-        bev_fused = bev_fused.squeeze(0)
+        # Now the shape is (4, 128, 128, 128)
+        bev_fused = bev_fused.squeeze(2)
 
         preds, _ = self.bbox_head(bev_fused)
 
