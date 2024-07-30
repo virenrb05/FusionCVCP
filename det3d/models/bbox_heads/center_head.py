@@ -18,7 +18,8 @@ import copy
 try:
     from det3d.ops.dcn import DeformConv
 except:
-    print("Deformable Convolution not built!")
+    pass
+    # print("Deformable Convolution not built!")
 
 from det3d.core.utils.circle_nms_jit import circle_nms
 
@@ -214,7 +215,7 @@ class CenterHead(nn.Module):
         )
 
         self.tasks = nn.ModuleList()
-        print("Use HM Bias: ", init_bias)
+        # print("Use HM Bias: ", init_bias)
 
         if dcn_head:
             print("Use Deformable Convolution in the CenterHead!")
