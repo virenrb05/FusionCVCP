@@ -276,7 +276,7 @@ class CenterHead(nn.Module):
 
             loc_loss = (box_loss*box_loss.new_tensor(self.code_weights)).sum()
 
-            hm_weight = 20.0 # used to be 1
+            hm_weight = 2.0 # used to be 1
             loc_weight = 0.25 # used to be 0.25
             loss = hm_weight*hm_loss + loc_weight*loc_loss
 

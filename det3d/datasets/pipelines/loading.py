@@ -40,10 +40,6 @@ def read_file(path, tries=2, num_point_feature=4, virtual=False):
         points = np.concatenate([points, virtual_points1, virtual_points2], axis=0).astype(np.float32)
     else:
         points = np.fromfile(path, dtype=np.float32).reshape(-1, 5)[:, :num_point_feature]
-        # from nuscenes.utils.data_classes import LidarPointCloud
-        
-        # points = LidarPointCloud.from_file_multisweep(self.nusc, sample_rec, chan, ref_chan, nsweeps=10)
-
     return points
 
 

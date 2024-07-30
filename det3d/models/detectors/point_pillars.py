@@ -104,8 +104,6 @@ class PointPillars(SingleStageDetector):
             # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
             return boxes
 
-
-
     def forward_two_stage(self, example, return_loss=True, **kwargs):
         voxels = example["voxels"]
         coordinates = example["coordinates"]
@@ -126,23 +124,21 @@ class PointPillars(SingleStageDetector):
         ctp_bev = x
 
         # fusion
-        cvt_bev = torch.tensor([]).cuda()
+        cvt_bev = torch.tensor([]).to(x.device)
         for batch in example['metadata']:
             bev_loaded_batch = torch.load(
-                f"./predictions/{batch['token']}.pth").cuda()
+                f"/home/vxm240030/CenterPoint/predictions/{batch['token']}.pth").to(x.device)
             cvt_bev = torch.cat((cvt_bev, bev_loaded_batch), dim=0)
         cvt_bev = self.decoder(cvt_bev)
 
         # interpolate cvt_bev to match sizes
         cvt_bev = self.mlp(cvt_bev)
-        cvt_bev = F.interpolate(cvt_bev, size=(360, 360))
+        cvt_bev = F.interpolate(cvt_bev, size=(128, 128))
 
+        # fuse
         bev_fused = torch.cat((cvt_bev, ctp_bev), dim=1).contiguous()
-
-        # Define a 1x1 convolution to reduce the 8 channels back to 4 channels
-        conv1x1 = torch.nn.Conv2d(
-            in_channels=bev_fused.shape[0], out_channels=exa, kernel_size=(1, 1, 1)).cuda()
-
+        bev_fused = bev_fused.unsqueeze(1) # Bx1xDxHxW
+                
         # Apply the convolution
         bev_fused = self.conv3d(bev_fused) # Bx128x1xHxW
 
@@ -151,7 +147,6 @@ class PointPillars(SingleStageDetector):
         bev_fused = bev_fused.squeeze(2)
 
         preds, _ = self.bbox_head(bev_fused)
-
 
         # manual deepcopy ...
         new_preds = []
@@ -162,10 +157,10 @@ class PointPillars(SingleStageDetector):
 
             new_preds.append(new_pred)
 
-        boxes = self.bbox_head.predict(example, new_preds, self.test_cfg)
 
         # self.f1_metric(boxes, example['gt_boxes_and_cls'])
         loss = self.bbox_head.loss(example, new_preds, self.test_cfg)
+        boxes = self.bbox_head.predict(example, new_preds, self.test_cfg)
 
         if return_loss:
             return boxes, bev_fused, loss
