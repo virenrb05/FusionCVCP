@@ -17,7 +17,7 @@ from .builder import (
 from .detectors import *  # noqa: F401,F403
 from .necks import *  # noqa: F401,F403
 from .readers import *
-from .registry import (
+from .second_stage.registry import (
     BACKBONES,
     DETECTORS,
     HEADS,

@@ -64,11 +64,6 @@ def parse_args():
 
 
 def main():
-    from nuscenes import NuScenes
-
-    # nusc = NuScenes(version='v1.0-trainval', dataroot='./data/nuScenes', verbose=True)
-    # path = nusc.render_sample_data('262df5a1529c4dcbb6106cb1a23b8a95', )
-
     
     torch.cuda.empty_cache()
     # torch.manual_seed(0)

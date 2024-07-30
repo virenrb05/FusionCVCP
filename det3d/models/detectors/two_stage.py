@@ -1,5 +1,5 @@
 from det3d.core.bbox import box_torch_ops
-from ..registry import DETECTORS
+from ..second_stage.registry import DETECTORS
 from .base import BaseDetector
 from .. import builder
 import torch 
@@ -179,7 +179,7 @@ class TwoStageDetector(BaseDetector):
         features = [] 
 
         for module in self.second_stage:
-            feature = module.forward(example, centers_vehicle_frame, self.num_point)
+            feature = module(example, centers_vehicle_frame, self.num_point)
             features.append(feature)
             # feature is two level list 
             # first level is number of two stage information streams

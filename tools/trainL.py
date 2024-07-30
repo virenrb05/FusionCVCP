@@ -17,6 +17,7 @@ from det3d.torchie.parallel import collate_kitti
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
+
 def main():
     cfg = Config.fromfile(
         '/home/vxm240030/CenterPoint/configs/nusc/pp/nusc_centerpoint_pp_02voxel_two_pfn_10sweep.py')
@@ -31,16 +32,17 @@ def main():
     )
 
     hyperparameters = {
-        'epochs': 10,
-        'batch_size': 4,
-        'lr': 0.001,
+        'epochs': 40,
+        'batch_size': 12,
+        'lr': 0.0001,
         'base_momentum': 0.85,
         'max_momentum': 0.95,
-        'weight_decay': 0.01,
+        'weight_decay': 0.05,
         'num_workers': 2,
     }
-    
-    model = build_detector(cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
+
+    model = build_detector(
+        cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
 
     modelmodule = CPModel(model)
 
@@ -76,7 +78,7 @@ def main():
     trainer = Trainer(
         accelerator='gpu',
         devices=[0, 1, 2, 3],
-        max_epochs=5,
+        max_epochs=hyperparameters['epochs'],
         strategy=DDPStrategy(find_unused_parameters=False),
         logger=logger,
         log_every_n_steps=10,
@@ -92,6 +94,7 @@ def main():
         train_dataloaders=data_loader,
     )
 
+    print('TRAINING DONE')
     print('\n=========================')
 
 

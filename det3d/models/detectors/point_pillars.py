@@ -121,32 +121,34 @@ class PointPillars(SingleStageDetector):
         )
 
         x = self.extract_feat(data)
-        ctp_bev = x
+        bev_feature = x
+        # ctp_bev = x
 
-        # fusion
-        cvt_bev = torch.tensor([]).to(x.device)
-        for batch in example['metadata']:
-            bev_loaded_batch = torch.load(
-                f"/home/vxm240030/CenterPoint/predictions/{batch['token']}.pth").to(x.device)
-            cvt_bev = torch.cat((cvt_bev, bev_loaded_batch), dim=0)
-        cvt_bev = self.decoder(cvt_bev)
+        # # fusion
+        # cvt_bev = torch.tensor([]).to(x.device)
+        # for batch in example['metadata']:
+        #     bev_loaded_batch = torch.load(
+        #         f"/home/vxm240030/CenterPoint/predictions/{batch['token']}.pth").to(x.device)
+        #     cvt_bev = torch.cat((cvt_bev, bev_loaded_batch), dim=0)
+        # cvt_bev = self.decoder(cvt_bev)
 
-        # interpolate cvt_bev to match sizes
-        cvt_bev = self.mlp(cvt_bev)
-        cvt_bev = F.interpolate(cvt_bev, size=(128, 128))
+        # # interpolate cvt_bev to match sizes
+        # cvt_bev = self.mlp(cvt_bev)
+        # cvt_bev = F.interpolate(cvt_bev, size=(360, 360))
 
-        # fuse
-        bev_fused = torch.cat((cvt_bev, ctp_bev), dim=1).contiguous()
-        bev_fused = bev_fused.unsqueeze(1) # Bx1xDxHxW
+        # # fuse
+        # bev_fused = torch.cat((cvt_bev, ctp_bev), dim=1).contiguous()
+        # bev_fused = bev_fused.unsqueeze(1) # Bx1xDxHxW
                 
-        # Apply the convolution
-        bev_fused = self.conv3d(bev_fused) # Bx128x1xHxW
+        # # Apply the convolution
+        # bev_fused = self.conv3d(bev_fused) # Bx128x1xHxW
 
-        # Remove the singleton dimension
-        # Now the shape is (4, 128, 128, 128)
-        bev_fused = bev_fused.squeeze(2)
+        # # Remove the singleton dimension
+        # # Now the shape is (4, 128, 128, 128)
+        # bev_fused = bev_fused.squeeze(2)
 
-        preds, _ = self.bbox_head(bev_fused)
+        # preds, _ = self.bbox_head(bev_fused)
+        preds, _ = self.bbox_head(x)
 
         # manual deepcopy ...
         new_preds = []
@@ -158,67 +160,16 @@ class PointPillars(SingleStageDetector):
             new_preds.append(new_pred)
 
 
-        # self.f1_metric(boxes, example['gt_boxes_and_cls'])
         loss = self.bbox_head.loss(example, new_preds, self.test_cfg)
+        # self.f1_metric(boxes, example['gt_boxes_and_cls'])
         boxes = self.bbox_head.predict(example, new_preds, self.test_cfg)
 
         if return_loss:
-            return boxes, bev_fused, loss
+            return boxes, bev_feature, loss
         else:
-            return boxes, bev_fused, None
+            return boxes, bev_feature, None
 
 
-def visualize(pred_boxes_3d, label_boxes_3d):
-    import matplotlib.pyplot as plt
-    import matplotlib.patches as patches
-    pred_boxes_2d = []
-    label_boxes_2d = []
-    for box in pred_boxes_3d:
-        x, y, z, w, l, h, vel_x, vel_y, yaw = box
-        pred_boxes_2d.append((x, y, w, l))
-    for box in label_boxes_3d:
-        x, y, z, w, l, h, vel_x, vel_y, yaw = box
-        label_boxes_2d.append((x, y, w, l))
-    # Create a plot
-    fig, ax = plt.subplots()
-
-    # Plot each pred bounding box
-    for bbox in pred_boxes_2d:
-        c_x, c_y, w, l = bbox
-        lower_left_x = c_x - l / 2
-        lower_left_y = c_y - w / 2
-        w = w.item()
-        l = l.item()
-        rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item()), w, l, yaw, linewidth=1, edgecolor='r', facecolor='none')
-        if yaw != 0.0: 
-            print(yaw)
-        ax.add_patch(rect)
-
-    # Plot each label bounding box
-    for bbox in label_boxes_2d:
-        c_x, c_y, w, l = bbox
-        lower_left_x = c_x - w / 2
-        lower_left_y = c_y - l / 2
-        w = w.item()
-        l = l.item()
-        rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item()), w, l, yaw, linewidth=1, edgecolor='g', facecolor='none')
-        ax.add_patch(rect)
-
-    # Plot the ego vehicle at the origin
-    ax.plot(0, 0, 'bo')  # blue dot
-
-    # Set plot limits
-    ax.set_xlim(-50, 50)
-    ax.set_ylim(-50, 50)
-
-    # Set labels and title
-    ax.set_xlabel('X position')
-    ax.set_ylabel('Y position')
-    ax.set_title('2D Bounding Boxes Relative to Ego Vehicle')
-
-    # Save the plot as an image
-    plt.savefig('bounding_boxes_plot.png')
-    plt.close()
 
 
 def iou_3d(box1, box2):

@@ -11,7 +11,7 @@ from .roi_head_template import RoIHeadTemplate
 
 from det3d.core import box_torch_ops
 
-from ..registry import ROI_HEAD
+from ..second_stage.registry import ROI_HEAD
 
 @ROI_HEAD.register_module
 class RoIHead(RoIHeadTemplate):

@@ -13,7 +13,7 @@ from det3d.torchie.cnn import kaiming_init
 from torch import double, nn
 from det3d.models.losses.centernet_loss import FastFocalLoss, RegLoss
 from det3d.models.utils import Sequential
-from ..registry import HEADS
+from ..second_stage.registry import HEADS
 import copy 
 try:
     from det3d.ops.dcn import DeformConv
