@@ -28,10 +28,10 @@ class CPModel(LightningModule):
         preds = self.model(batch, return_loss=False)
         preds_boxes = preds[0]['box3d_lidar']
         # TODO: display confidence score in visualization next to corresponding box
-        # label_boxes = batch['gt_boxes_and_cls'][..., :-1].squeeze(0)
+        label_boxes = batch['gt_boxes_and_cls'][..., :-1].squeeze(0)
         # remove any rows with all zeros
-        # label_boxes = label_boxes[~torch.all(label_boxes == 0.0, dim=1)]
-        # self.visualize(preds_boxes, label_boxes, batch['metadata'][0]['token'])
+        label_boxes = label_boxes[~torch.all(label_boxes == 0.0, dim=1)]
+        self.visualize(preds_boxes, label_boxes, batch['metadata'][0]['token'])
 
         # return boxes
 

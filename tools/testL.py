@@ -44,7 +44,7 @@ def main():
 
     modelmodule = CPModel(model)
 
-    dataset = build_dataset(cfg.data.val)
+    dataset = build_dataset(cfg.data.train)
     data_loader = DataLoader(
         dataset=dataset,
         batch_size=hyperparameters['batch_size'],
