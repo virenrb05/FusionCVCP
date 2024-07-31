@@ -270,13 +270,13 @@ class CenterHead(nn.Module):
                 raise NotImplementedError()
 
             ret = {}
- 
+
             # Regression loss for dimension, offset, height, rotation            
             box_loss = self.crit_reg(preds_dict['anno_box'], example['mask'][task_id], example['ind'][task_id], target_box)
 
             loc_loss = (box_loss*box_loss.new_tensor(self.code_weights)).sum()
 
-            hm_weight = 2.0 # used to be 1
+            hm_weight = 5.0 # used to be 1
             loc_weight = 0.25 # used to be 0.25
             loss = hm_weight*hm_loss + loc_weight*loc_loss
 
@@ -393,7 +393,7 @@ class CenterHead(nn.Module):
             batch_dim = batch_dim.reshape(batch, H*W, 3)
             batch_hm = batch_hm.reshape(batch, H*W, num_cls)
 
-            ys, xs = torch.meshgrid([torch.arange(0, H), torch.arange(0, W)])
+            ys, xs = torch.meshgrid([torch.arange(0, H), torch.arange(0, W)], indexing='ij')
             ys = ys.view(1, H, W).repeat(batch, 1, 1).to(batch_hm)
             xs = xs.view(1, H, W).repeat(batch, 1, 1).to(batch_hm)
 

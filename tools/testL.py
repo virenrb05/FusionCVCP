@@ -17,6 +17,7 @@ from torch.utils.data import SequentialSampler
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
+
 def main():
     cfg = Config.fromfile(
         '/home/vxm240030/CenterPoint/configs/nusc/pp/nusc_centerpoint_pp_02voxel_two_pfn_10sweep.py')
@@ -39,8 +40,9 @@ def main():
         'weight_decay': 0.01,
         'num_workers': 2,
     }
-    
-    model = build_detector(cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
+
+    model = build_detector(
+        cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
 
     modelmodule = CPModel(model)
 
@@ -92,7 +94,7 @@ def main():
     trainer.test(
         model=modelmodule,
         dataloaders=data_loader,
-        ckpt_path='/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_0/checkpoints/epoch=1-step=3432.ckpt'
+        ckpt_path='/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_16/checkpoints/epoch=39-step=34320.ckpt'
     )
 
     print('\n=========================')

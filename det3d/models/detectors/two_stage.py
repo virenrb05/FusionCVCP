@@ -178,6 +178,7 @@ class TwoStageDetector(BaseDetector):
 
         features = [] 
 
+
         for module in self.second_stage:
             feature = module(example, centers_vehicle_frame, self.num_point)
             features.append(feature)

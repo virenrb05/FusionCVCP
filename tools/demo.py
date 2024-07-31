@@ -35,6 +35,8 @@ import cv2
 from tools.demo_utils import visual 
 from collections import defaultdict
 
+torch.multiprocessing.set_sharing_strategy('file_system')
+
 def convert_box(info):
     boxes =  info["gt_boxes"].astype(np.float32)
     names = info["gt_names"]
@@ -68,7 +70,7 @@ def main():
         pin_memory=False,
     )
 
-    checkpoint = load_checkpoint(model, 'work_dirs/centerpoint_pillar_512_demo/latest.pth', map_location="cpu")
+    checkpoint = load_checkpoint(model, 'work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_0/checkpoints/epoch=1-step=3432.ckpt', map_location="cpu")
     model.eval()
 
     model = model.cuda()
@@ -79,11 +81,12 @@ def main():
     gt_annos = [] 
     detections  = [] 
 
-    for i, data_batch in enumerate(data_loader):
+    from tqdm import tqdm
+    for i, data_batch in tqdm(enumerate(data_loader)):
         info = dataset._nusc_infos[i]
         gt_annos.append(convert_box(info))
 
-        points = data_batch['points'][:, 1:4].cpu().numpy()
+        points = data_batch['points'][0][:, 1:4].cpu().numpy()
         with torch.no_grad():
             outputs = batch_processor(
                 model, data_batch, train_mode=False, local_rank=0,

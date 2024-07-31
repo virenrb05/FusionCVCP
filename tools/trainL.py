@@ -32,13 +32,13 @@ def main():
     )
 
     hyperparameters = {
-        'epochs': 40,
-        'batch_size': 12,
+        'epochs': 10,
+        'batch_size': 4,
         'lr': 0.0001,
         'base_momentum': 0.85,
         'max_momentum': 0.95,
-        'weight_decay': 0.05,
-        'num_workers': 2,
+        'weight_decay': 0.02,
+        'num_workers': 4,
     }
 
     model = build_detector(
@@ -53,6 +53,7 @@ def main():
         shuffle=True,
         num_workers=hyperparameters['num_workers'],
         collate_fn=collate_kitti,
+        drop_last=True,
         pin_memory=True,
     )
 

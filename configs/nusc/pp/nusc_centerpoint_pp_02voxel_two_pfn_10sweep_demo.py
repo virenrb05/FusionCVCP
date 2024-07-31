@@ -5,11 +5,11 @@ from det3d.utils.config_tool import get_downsample_factor
 
 tasks = [
     dict(num_class=1, class_names=["car"]),
-    dict(num_class=2, class_names=["truck", "construction_vehicle"]),
-    dict(num_class=2, class_names=["bus", "trailer"]),
-    dict(num_class=1, class_names=["barrier"]),
-    dict(num_class=2, class_names=["motorcycle", "bicycle"]),
-    dict(num_class=2, class_names=["pedestrian", "traffic_cone"]),
+    # dict(num_class=2, class_names=["truck", "construction_vehicle"]),
+    # dict(num_class=2, class_names=["bus", "trailer"]),
+    # dict(num_class=1, class_names=["barrier"]),
+    # dict(num_class=2, class_names=["motorcycle", "bicycle"]),
+    # dict(num_class=2, class_names=["pedestrian", "traffic_cone"]),
 ]
 
 class_names = list(itertools.chain(*[t["class_names"] for t in tasks]))
@@ -91,29 +91,29 @@ db_sampler = dict(
     db_info_path="data/nuScenes/dbinfos_train_10sweeps_withvelo.pkl",
     sample_groups=[
         dict(car=2),
-        dict(truck=3),
-        dict(construction_vehicle=7),
-        dict(bus=4),
-        dict(trailer=6),
-        dict(barrier=2),
-        dict(motorcycle=6),
-        dict(bicycle=6),
-        dict(pedestrian=2),
-        dict(traffic_cone=2),
+        # dict(truck=3),
+        # dict(construction_vehicle=7),
+        # dict(bus=4),
+        # dict(trailer=6),
+        # dict(barrier=2),
+        # dict(motorcycle=6),
+        # dict(bicycle=6),
+        # dict(pedestrian=2),
+        # dict(traffic_cone=2),
     ],
     db_prep_steps=[
         dict(
             filter_by_min_num_points=dict(
                 car=5,
-                truck=5,
-                bus=5,
-                trailer=5,
-                construction_vehicle=5,
-                traffic_cone=5,
-                barrier=5,
-                motorcycle=5,
-                bicycle=5,
-                pedestrian=5,
+                # truck=5,
+                # bus=5,
+                # trailer=5,
+                # construction_vehicle=5,
+                # traffic_cone=5,
+                # barrier=5,
+                # motorcycle=5,
+                # bicycle=5,
+                # pedestrian=5,
             )
         ),
         dict(filter_by_difficulty=[-1],),
@@ -159,8 +159,8 @@ test_pipeline = [
     dict(type="Reformat"),
 ]
 
-train_anno = "demo/nuScenes/demo_infos.pkl"
-val_anno = "demo/nuScenes/demo_infos.pkl"
+train_anno = "data/nuScenes/infos_train_10sweeps_withvelo_filter_True.pkl"
+val_anno = "data/nuScenes/infos_val_10sweeps_withvelo_filter_True.pkl"
 test_anno = None
 
 data = dict(
