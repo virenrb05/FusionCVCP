@@ -70,7 +70,7 @@ def main():
         pin_memory=False,
     )
 
-    checkpoint = load_checkpoint(model, 'work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_0/checkpoints/epoch=1-step=3432.ckpt', map_location="cpu")
+    checkpoint = load_checkpoint(model, '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_6/checkpoints/last.ckpt', map_location="cpu")
     model.eval()
 
     model = model.cuda()
@@ -100,12 +100,16 @@ def main():
             detections.append(output)
 
         points_list.append(points.T)
+        
+        x, y, z = points_list[i], gt_annos[i], detections[i]
+        visual(points_list[i], gt_annos[i], detections[i], i)
     
     print('Done model inference. Please wait a minute, the matplotlib is a little slow...')
     
-    for i in range(len(points_list)):
-        visual(points_list[i], gt_annos[i], detections[i], i)
-        print("Rendered Image {}".format(i))
+    # for i in range(len(points_list)):
+    #     x, y, z = points_list[i], gt_annos[i], detections[i]
+    #     visual(points_list[i], gt_annos[i], detections[i], i)
+    #     print("Rendered Image {}".format(i))
     
     image_folder = 'demo'
     video_name = 'video.avi'

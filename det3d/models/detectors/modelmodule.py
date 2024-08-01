@@ -14,6 +14,7 @@ from nuscenes import NuScenes
 from math import pi
 
 from .AveragePrecision import AveragePrecision
+from lightning.pytorch.loggers import TensorBoardLogger
 
 
 class CPModel(LightningModule):
@@ -21,16 +22,55 @@ class CPModel(LightningModule):
         super().__init__()
         self.model = model
         self.avg_precision = AveragePrecision()
-        self.preds = []
+        self.avg_prec = 0
 
     def training_step(self, batch, batch_idx):
-        loss = self.model(batch, return_loss=True)
+        loss, boxes = self.model(batch, return_loss=True)
         loss, second_losses = self.parse_second_losses(loss)
         self.log("train_loss", loss)
         self.log("train_loss_hm", second_losses['hm_loss'][0])
         self.log("train_loss_loc", second_losses['loc_loss'][0])
-        self.log("train_loss_loc_car", second_losses['loc_loss_elem'][0])
+        self.log("train_loss_loc_car", sum(second_losses['loc_loss_elem'][0]))
+        # for i, box in enumerate(boxes):
+        #     preds = box['box3d_lidar']
+        #     scores = box['scores']
+        #     label_boxes = batch['gt_boxes_and_cls'][i, :, :-1].squeeze(0)
+        #     # remove any rows with all zeros
+        #     label_boxes = label_boxes[~torch.all(label_boxes == 0.0, dim=1)]
+        #     self.avg_prec += self.avg_precision(preds, scores, label_boxes)
+        #     self.avg_precision.reset()
+        
+        if batch_idx % 400 == 0:
+            preds_boxes = boxes[0]['box3d_lidar']
+            # filter out boxes with confidence score less than 0.5
+            preds_boxes = preds_boxes[boxes[0]['scores'] > 0.5]
+            # TODO: display confidence score in visualization next to corresponding box
+            label_boxes = batch['gt_boxes_and_cls'][0, :, :-1].squeeze(0)
+            # remove any rows with all zeros
+            label_boxes = label_boxes[~torch.all(label_boxes == 0.0, dim=1)]
+            token = batch['metadata'][0]['token']
+            self.visualize(preds_boxes, label_boxes,
+                       f'{self.current_epoch}-{batch_idx}-{token}')
+
         return loss
+    
+    # def on_train_epoch_end(self):
+    #     self.log('train_avg_prec', self.avg_prec / self.trainer.num_training_batches)
+    #     self.avg_prec = 0
+
+    def log_tb_images(self, image, idx, token) -> None:
+        # Get tensorboard logger
+        tb_logger = None
+        for logger in self.trainer.loggers:
+            if isinstance(logger, TensorBoardLogger):
+                tb_logger = logger.experiment
+                break
+
+        if tb_logger is None:
+            raise ValueError('TensorBoard Logger not found')
+
+        # Log the images (Give them different names)
+        tb_logger.add_image(f"Image/{idx}_{token}", image)
 
     def test_step(self, batch, batch_idx):
         preds = self.model(batch, return_loss=False)
@@ -39,10 +79,12 @@ class CPModel(LightningModule):
         label_boxes = batch['gt_boxes_and_cls'][..., :-1].squeeze(0)
         # remove any rows with all zeros
         label_boxes = label_boxes[~torch.all(label_boxes == 0.0, dim=1)]
-        self.visualize(preds_boxes, label_boxes, batch['metadata'][0]['token'])
-        
+        token = batch['metadata'][0]['token']
+        self.visualize(preds_boxes, label_boxes,
+                       f'{token}')
+
         self.avg_precision.update(preds_boxes, preds[0]['scores'], label_boxes)
-        self.avg_precision.compute()
+        print(self.avg_precision.compute().item(), token)
         self.avg_precision.reset()
 
         # return boxes
@@ -102,7 +144,7 @@ class CPModel(LightningModule):
     def visualize(self, pred_boxes_3d, label_boxes_3d, token):
        # Create a plot
         fig, ax = plt.subplots()
-        
+
         for box in pred_boxes_3d:
             x, y, _, w, l, _, _, _, yaw = box
             lower_left_x = x - w / 2
@@ -110,9 +152,10 @@ class CPModel(LightningModule):
             w = w.item()
             l = l.item()
             rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item(
-            )), w, l, yaw * 180 / pi, linewidth=1, edgecolor='r', facecolor='none', rotation_point='xy')
+            )), w, l, yaw * 180 / pi, linewidth=1, edgecolor='r', facecolor='none', rotation_point='center')
             ax.add_patch(rect)
-        
+            ax.text(x, y, f'{int(yaw * 180 / pi)}', color='r')
+
         for box in label_boxes_3d:
             x, y, _, w, l, _, _, _, yaw = box
             lower_left_x = x - w / 2
@@ -120,11 +163,17 @@ class CPModel(LightningModule):
             w = w.item()
             l = l.item()
             rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item(
-            )), l, w, yaw * 180 / pi, linewidth=1, edgecolor='g', facecolor='none', rotation_point='xy')
+            )), w, l, 90 + yaw * 180 / pi, linewidth=1, edgecolor='g', facecolor='none', rotation_point='center')
             ax.add_patch(rect)
-        
+            # if (_yaw := 90 + yaw * 180 / pi) != 0:
+            #     print(_yaw, yaw)
+            ax.text(x, y, f'{90 + int(yaw * 180 / pi)}', color='g')
+
         # Plot the ego vehicle at the origin
         ax.plot(0, 0, 'bo')  # blue dot
+
+        ax.legend(handles=[patches.Patch(color='r', label='Prediction'), patches.Patch(
+            color='g', label='Ground Truth')])
 
         # Set plot limits
         ax.set_xlim(-50, 50)
@@ -136,7 +185,8 @@ class CPModel(LightningModule):
         ax.set_title('2D Bounding Boxes Relative to Ego Vehicle')
 
         # Save the plot as an image
-        path = Path(self.logger.log_dir) / 'bounding_boxes_plots'
+        path = Path(self.logger.log_dir) / 'images'
+
         os.makedirs(path, exist_ok=True)
-        plt.savefig(path / f'bounding_boxes_plot_{token}.png')
+        plt.savefig(path / f'{token}.png')
         plt.close()

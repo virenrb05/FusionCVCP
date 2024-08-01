@@ -19,6 +19,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 
 def main():
+    torch.set_float32_matmul_precision('medium')
     cfg = Config.fromfile(
         '/home/vxm240030/CenterPoint/configs/nusc/pp/nusc_centerpoint_pp_02voxel_two_pfn_10sweep.py')
 
@@ -33,12 +34,12 @@ def main():
 
     hyperparameters = {
         'epochs': 10,
-        'batch_size': 4,
+        'batch_size': 2,
         'lr': 0.0001,
         'base_momentum': 0.85,
         'max_momentum': 0.95,
         'weight_decay': 0.02,
-        'num_workers': 4,
+        'num_workers': 2,
     }
 
     model = build_detector(
@@ -93,6 +94,7 @@ def main():
     trainer.fit(
         model=modelmodule,
         train_dataloaders=data_loader,
+        # ckpt_path=cfg.load_from,
     )
 
     print('TRAINING DONE')

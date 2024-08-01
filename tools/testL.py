@@ -84,7 +84,7 @@ def main():
         logger=logger,
         log_every_n_steps=10,
         callbacks=[checkpointer, lr_monitor, model_summary],
-        limit_test_batches=1.0
+        limit_test_batches=0.01
     )
 
     print('Hyperparameters:', hyperparameters)
@@ -94,7 +94,7 @@ def main():
     trainer.test(
         model=modelmodule,
         dataloaders=data_loader,
-        ckpt_path='/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_16/checkpoints/epoch=39-step=34320.ckpt'
+        ckpt_path=cfg.load_from
     )
 
     print('\n=========================')

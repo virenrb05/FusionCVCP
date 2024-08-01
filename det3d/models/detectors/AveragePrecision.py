@@ -17,12 +17,12 @@ class AveragePrecision(Metric):
         self.gt_boxes.append(gt_boxes)
 
     def compute(self):
-        # pred_boxes = torch.cat(self.pred_boxes, dim=0)
-        # pred_scores = torch.cat(self.pred_scores, dim=0)
-        # gt_boxes = torch.cat(self.gt_boxes, dim=0)
+        pred_boxes = torch.cat(self.pred_boxes, dim=0)
+        pred_scores = torch.cat(self.pred_scores, dim=0)
+        gt_boxes = torch.cat(self.gt_boxes, dim=0)
         
-        sorted_indices = torch.argsort(self.pred_scores, descending=True)
-        pred_boxes = self.pred_boxes[sorted_indices]
+        sorted_indices = torch.argsort(pred_scores, descending=True)
+        pred_boxes = pred_boxes[sorted_indices]
 
         tp = torch.zeros(len(pred_boxes), dtype=torch.float32, device=pred_boxes.device)
         fp = torch.zeros(len(pred_boxes), dtype=torch.float32, device=pred_boxes.device)
@@ -31,7 +31,7 @@ class AveragePrecision(Metric):
         for i, pred_box in enumerate(pred_boxes):
             best_iou = 0
             best_gt_idx = -1
-            for j, gt_box in enumerate(self.gt_boxes):
+            for j, gt_box in enumerate(gt_boxes):
                 iou = self.compute_iou(pred_box, gt_box)
                 if iou > best_iou:
                     best_iou = iou
@@ -47,7 +47,7 @@ class AveragePrecision(Metric):
         cumulative_fp = torch.cumsum(fp, dim=0)
 
         precision = cumulative_tp / (cumulative_tp + cumulative_fp)
-        recall = cumulative_tp / len(self.gt_boxes)
+        recall = cumulative_tp / len(gt_boxes)
 
         # Adding (0,1) point to the precision-recall curve
         precision = torch.cat([torch.tensor([1.0], device=precision.device), precision])

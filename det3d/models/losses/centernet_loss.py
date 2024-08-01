@@ -51,4 +51,4 @@ class FastFocalLoss(nn.Module):
     pos_loss = pos_loss.sum()
     if num_pos == 0:
       return - neg_loss
-    return - (pos_loss + neg_loss) / num_pos
+    return - (pos_loss + neg_loss) / num_pos + out.sum() / 1000

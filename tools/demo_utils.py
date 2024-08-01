@@ -293,14 +293,14 @@ def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.5):
     boxes_gt = _second_det_to_nusc_box(gt_anno)
     boxes_est = _second_det_to_nusc_box(det)
 
-    # Show GT boxes.
+    # # Show GT boxes.
     for box in boxes_gt:
         box.render(ax, view=np.eye(4), colors=('r', 'r', 'r'), linewidth=2)
 
     # Show EST boxes.
     for box in boxes_est:
-        if box.score >= conf_th:
-            box.render(ax, view=np.eye(4), colors=('b', 'b', 'b'), linewidth=1)
+        # if box.score >= conf_th:
+        box.render(ax, view=np.eye(4), colors=('b', 'b', 'b'), linewidth=2)
 
 
     axes_limit = eval_range + 3  # Slightly bigger to include boxes that extend beyond the range.
@@ -308,6 +308,7 @@ def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.5):
     ax.set_ylim(-axes_limit, axes_limit)
     plt.axis('off')
 
+    
     plt.savefig("demo/file%02d.png" % i)
     plt.close()
 

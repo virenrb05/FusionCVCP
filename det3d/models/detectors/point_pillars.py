@@ -98,7 +98,7 @@ class PointPillars(SingleStageDetector):
         # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
         
         if return_loss:
-            return self.bbox_head.loss(example, preds, self.test_cfg)
+            return self.bbox_head.loss(example, preds, self.test_cfg), self.bbox_head.predict(example, preds, self.test_cfg)
         else:
             boxes = self.bbox_head.predict(example, preds, self.test_cfg)
             # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])

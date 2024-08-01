@@ -75,7 +75,7 @@ test_cfg = dict(
         nms_post_max_size=83,
         nms_iou_threshold=0.2,
     ),
-    score_threshold=0.1,
+    score_threshold=0.4,
     pc_range=[-51.2, -51.2],
     out_size_factor=get_downsample_factor(model),
     voxel_size=[0.2, 0.2]
@@ -224,6 +224,7 @@ dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"
 work_dir = './work_dirs/{}/'.format(__file__[__file__.rfind('/') + 1:-3])
 # load_from = '/home/imren/CenterPoint/fused_ckpt2.pth'
-load_from = None
+load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_0/checkpoints/epoch=1-step=3432.ckpt'
+load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_18/checkpoints/last.ckpt'
 resume_from = None
 workflow = [('train', 1)]
