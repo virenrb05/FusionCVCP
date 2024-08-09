@@ -28,10 +28,10 @@ class PointPillars(SingleStageDetector):
         super(PointPillars, self).__init__(
             reader, backbone, neck, bbox_head, train_cfg, test_cfg, pretrained
         )
-        # self.f1 = F1Score3D()
+        self.f1 = F1Score3D()
         self.mlp = MLP(num_hidden=4)
         self.decoder = Decoder(dim=128, blocks=[128, 128, 64])
-        self.decoder.load_state_dict(torch.load('./decoder.pth'))
+        self.decoder.load_state_dict(torch.load('./decoder.pth', weights_only=True))
         for param in self.decoder.parameters():
             param.requires_grad = False
         self.conv3d = nn.Conv3d(in_channels=1, out_channels=384, kernel_size=(768, 3, 3), stride=(768, 1, 1), padding=(0, 1, 1))

@@ -50,5 +50,5 @@ class FastFocalLoss(nn.Module):
                mask.unsqueeze(2)
     pos_loss = pos_loss.sum()
     if num_pos == 0:
-      return - neg_loss
-    return - (pos_loss + neg_loss) / num_pos + out.sum() / 1000
+      return - neg_loss + out.sum() / 20
+    return - (pos_loss + neg_loss) / num_pos + out.sum() / 20

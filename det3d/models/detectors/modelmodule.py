@@ -18,11 +18,13 @@ from lightning.pytorch.loggers import TensorBoardLogger
 
 
 class CPModel(LightningModule):
-    def __init__(self, model):
+    def __init__(self, model, cfg):
         super().__init__()
+        self.cfg = cfg
         self.model = model
         self.avg_precision = AveragePrecision()
         self.avg_prec = 0
+        self.preds = []
 
     def training_step(self, batch, batch_idx):
         loss, boxes = self.model(batch, return_loss=True)
@@ -74,6 +76,7 @@ class CPModel(LightningModule):
 
     def test_step(self, batch, batch_idx):
         preds = self.model(batch, return_loss=False)
+        self.preds.append(preds)
         preds_boxes = preds[0]['box3d_lidar']
         # TODO: display confidence score in visualization next to corresponding box
         label_boxes = batch['gt_boxes_and_cls'][..., :-1].squeeze(0)
@@ -83,9 +86,9 @@ class CPModel(LightningModule):
         self.visualize(preds_boxes, label_boxes,
                        f'{token}')
 
-        self.avg_precision.update(preds_boxes, preds[0]['scores'], label_boxes)
-        print(self.avg_precision.compute().item(), token)
-        self.avg_precision.reset()
+        # self.avg_precision.update(preds_boxes, preds[0]['scores'], label_boxes)
+        # print(self.avg_precision.compute().item(), token)
+        # self.avg_precision.reset()
 
         # return boxes
 
@@ -105,6 +108,14 @@ class CPModel(LightningModule):
         #     self.preds.append(pred)
 
     def on_test_epoch_end(self):
+        scores = []
+        for pred in self.preds:
+            scores.append(pred[0]['scores'])
+        scores = torch.cat(scores)
+        plt.hist(scores.cpu().numpy(), bins=50)
+        plt.savefig(os.path.join(self.logger.log_dir, "scores.png"))
+        plt.close()
+        
         # with open(os.path.join(self.logger.log_dir, "prediction.pkl"), "wb") as f:
         #     pickle.dump(self.preds, f)
 
@@ -117,9 +128,9 @@ class CPModel(LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
-            self.parameters(), amsgrad=0, weight_decay=0.02, betas=(0.9, 0.99), lr=0.0001)
+            self.parameters(), amsgrad=self.cfg.optimizer.amsgrad, weight_decay=self.cfg.optimizer.wd, betas=(0.9, 0.99), lr=self.cfg.lr_config.lr_max)
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            optimizer, max_lr=0.0001, total_steps=self.trainer.estimated_stepping_batches, max_momentum=0.95, base_momentum=0.85, div_factor=10.0, pct_start=0.4)
+            optimizer, max_lr=self.cfg.lr_config.lr_max, total_steps=self.trainer.estimated_stepping_batches, max_momentum=self.cfg.lr_config.moms[0], base_momentum=self.cfg.lr_config.moms[1], div_factor=self.cfg.lr_config.div_factor, pct_start=self.cfg.lr_config.pct_start)
         return {
             'optimizer': optimizer,
             'lr_scheduler': {
@@ -154,7 +165,7 @@ class CPModel(LightningModule):
             rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item(
             )), w, l, yaw * 180 / pi, linewidth=1, edgecolor='r', facecolor='none', rotation_point='center')
             ax.add_patch(rect)
-            ax.text(x, y, f'{int(yaw * 180 / pi)}', color='r')
+            # ax.text(x, y, f'{int(yaw * 180 / pi)}', color='r')
 
         for box in label_boxes_3d:
             x, y, _, w, l, _, _, _, yaw = box
@@ -163,11 +174,11 @@ class CPModel(LightningModule):
             w = w.item()
             l = l.item()
             rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item(
-            )), w, l, 90 + yaw * 180 / pi, linewidth=1, edgecolor='g', facecolor='none', rotation_point='center')
+            )), w, l, yaw * 180 / pi, linewidth=1, edgecolor='g', facecolor='none', rotation_point='center')
             ax.add_patch(rect)
             # if (_yaw := 90 + yaw * 180 / pi) != 0:
             #     print(_yaw, yaw)
-            ax.text(x, y, f'{90 + int(yaw * 180 / pi)}', color='g')
+            # ax.text(x, y, f'{int(yaw * 180 / pi)}', color='g')
 
         # Plot the ego vehicle at the origin
         ax.plot(0, 0, 'bo')  # blue dot

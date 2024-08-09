@@ -39,7 +39,7 @@ class NuScenesDataset(PointCloudDataset):
         pipeline=None,
         class_names=None,
         test_mode=False,
-        version="v1.0-mini",
+        version="v1.0-trainval",
         load_interval=1,
         **kwargs,
     ):
@@ -190,6 +190,7 @@ class NuScenesDataset(PointCloudDataset):
         return self.get_sensor_data(idx)
 
     def evaluation(self, detections, output_dir=None, testset=False):
+        self.version = 'v1.0-trainval'
         version = self.version
         eval_set_map = {
             "v1.0-mini": "mini_val",
@@ -219,7 +220,7 @@ class NuScenesDataset(PointCloudDataset):
             "meta": None,
         }
 
-        nusc = NuScenes(version=version, dataroot=str(self._root_path), verbose=True)
+        nusc = NuScenes(version='v1.0-trainval', dataroot=str(self._root_path), verbose=True)
 
         mapped_class_names = []
         for n in self._class_names:

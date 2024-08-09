@@ -21,7 +21,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 def main():
     torch.set_float32_matmul_precision('medium')
     cfg = Config.fromfile(
-        '/home/vxm240030/CenterPoint/configs/nusc/pp/nusc_centerpoint_pp_02voxel_two_pfn_10sweep.py')
+        '/home/vxm240030/CenterPoint/configs/nusc_onestage_custom.py')
 
     faulthandler.enable()
     torch.cuda.empty_cache()
@@ -33,13 +33,13 @@ def main():
     )
 
     hyperparameters = {
-        'epochs': 10,
-        'batch_size': 2,
-        'lr': 0.0001,
-        'base_momentum': 0.85,
-        'max_momentum': 0.95,
-        'weight_decay': 0.02,
-        'num_workers': 2,
+        'epochs': cfg.total_epochs,
+        'batch_size': cfg.data.samples_per_gpu,
+        'lr': cfg.lr_config.lr_max,
+        'base_momentum': cfg.lr_config.moms[1],
+        'max_momentum': cfg.lr_config.moms[0],
+        'weight_decay': cfg.optimizer.wd,
+        'num_workers': cfg.data.workers_per_gpu,
     }
 
     model = build_detector(
@@ -79,7 +79,7 @@ def main():
 
     trainer = Trainer(
         accelerator='gpu',
-        devices=[0, 1, 2, 3],
+        devices=[3],
         max_epochs=hyperparameters['epochs'],
         strategy=DDPStrategy(find_unused_parameters=False),
         logger=logger,
