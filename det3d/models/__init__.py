@@ -25,7 +25,7 @@ from .registry import (
     NECKS,
     READERS,
 )
-from .second_stage import * 
+# from .second_stage import * 
 from .roi_heads import * 
 
 __all__ = [

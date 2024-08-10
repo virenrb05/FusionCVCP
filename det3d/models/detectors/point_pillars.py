@@ -47,7 +47,7 @@ class PointPillars(SingleStageDetector):
             x = self.neck(x)
         return x
 
-    def forward(self, example, return_loss=True, **kwargs):
+    def forward(self, example, **kwargs):
         voxels = example["voxels"]
         coordinates = example["coordinates"]
         num_points_in_voxel = example["num_points"]
@@ -70,7 +70,7 @@ class PointPillars(SingleStageDetector):
         cvt_bev = torch.tensor([]).to(x.device)
         for batch in example['metadata']:
             bev_loaded_batch = torch.load(
-                f"/home/vxm240030/CenterPoint/predictions/{batch['token']}.pth").to(x.device)
+                f"/home/vxm240030/CenterPoint/predictions/{batch['token']}.pth", weights_only=True).to(x.device)
             cvt_bev = torch.cat((cvt_bev, bev_loaded_batch), dim=0)
         cvt_bev = self.decoder(cvt_bev)
 
@@ -97,60 +97,6 @@ class PointPillars(SingleStageDetector):
         # boxes =  self.bbox_head.predict(example, preds, self.test_cfg)
         # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
         
-        if return_loss:
-            return self.bbox_head.loss(example, preds, self.test_cfg), self.bbox_head.predict(example, preds, self.test_cfg)
-        else:
-            boxes = self.bbox_head.predict(example, preds, self.test_cfg)
-            # visualize(boxes[0]['box3d_lidar'], example['gt_boxes_and_cls'][0][:, :-1])
-            return boxes
-
-    def forward_two_stage(self, example, return_loss=True, **kwargs):
-        voxels = example["voxels"]
-        coordinates = example["coordinates"]
-        num_points_in_voxel = example["num_points"]
-        num_voxels = example["num_voxels"]
-
-        batch_size = len(num_voxels)
-
-        data = dict(
-            features=voxels,
-            num_voxels=num_points_in_voxel,
-            coors=coordinates,
-            batch_size=batch_size,
-            input_shape=example["shape"][0],
-        )
-
-        x = self.extract_feat(data)
-        bev_feature = x
-        # ctp_bev = x
-
-        # # fusion
-        # cvt_bev = torch.tensor([]).to(x.device)
-        # for batch in example['metadata']:
-        #     bev_loaded_batch = torch.load(
-        #         f"/home/vxm240030/CenterPoint/predictions/{batch['token']}.pth").to(x.device)
-        #     cvt_bev = torch.cat((cvt_bev, bev_loaded_batch), dim=0)
-        # cvt_bev = self.decoder(cvt_bev)
-
-        # # interpolate cvt_bev to match sizes
-        # cvt_bev = self.mlp(cvt_bev)
-        # cvt_bev = F.interpolate(cvt_bev, size=(360, 360))
-
-        # # fuse
-        # bev_fused = torch.cat((cvt_bev, ctp_bev), dim=1).contiguous()
-        # bev_fused = bev_fused.unsqueeze(1) # Bx1xDxHxW
-                
-        # # Apply the convolution
-        # bev_fused = self.conv3d(bev_fused) # Bx128x1xHxW
-
-        # # Remove the singleton dimension
-        # # Now the shape is (4, 128, 128, 128)
-        # bev_fused = bev_fused.squeeze(2)
-
-        # preds, _ = self.bbox_head(bev_fused)
-        preds, _ = self.bbox_head(x)
-
-        # manual deepcopy ...
         new_preds = []
         for pred in preds:
             new_pred = {}
@@ -158,19 +104,13 @@ class PointPillars(SingleStageDetector):
                 new_pred[k] = v.detach()
 
             new_preds.append(new_pred)
+            
+        preds_final = self.bbox_head.predict(example, new_preds, self.test_cfg)
+        
+        loss = self.bbox_head.loss(example, preds, self.test_cfg)
 
-
-        loss = self.bbox_head.loss(example, new_preds, self.test_cfg)
-        # self.f1_metric(boxes, example['gt_boxes_and_cls'])
-        boxes = self.bbox_head.predict(example, new_preds, self.test_cfg)
-
-        if return_loss:
-            return boxes, bev_feature, loss
-        else:
-            return boxes, bev_feature, None
-
-
-
+        return loss, preds, preds_final
+        
 
 def iou_3d(box1, box2):
     """

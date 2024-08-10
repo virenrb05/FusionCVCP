@@ -5,6 +5,7 @@ from ..registry import DETECTORS
 from .base import BaseDetector
 from ..utils.finetune_utils import FrozenBatchNorm2d
 from det3d.torchie.trainer import load_checkpoint
+from ..bbox_heads import CenterHead
 
 
 @DETECTORS.register_module
@@ -14,7 +15,7 @@ class SingleStageDetector(BaseDetector):
         reader,
         backbone,
         neck=None,
-        bbox_head=None,
+        bbox_head: CenterHead = None,
         train_cfg=None,
         test_cfg=None,
         pretrained=None,

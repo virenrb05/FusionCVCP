@@ -20,7 +20,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 def main():
     cfg = Config.fromfile(
-        '/home/vxm240030/CenterPoint/configs/nusc/pp/nusc_centerpoint_pp_02voxel_two_pfn_10sweep.py')
+        '/home/vxm240030/CenterPoint/configs/nusc_onestage_custom.py')
 
     faulthandler.enable()
     torch.cuda.empty_cache()
@@ -44,7 +44,7 @@ def main():
     model = build_detector(
         cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
 
-    modelmodule = CPModel(model)
+    modelmodule = CPModel(model, cfg)
 
     dataset = build_dataset(cfg.data.train)
     data_loader = DataLoader(

@@ -12,7 +12,7 @@ from nuscenes.eval.detection.evaluate import DetectionEval
 from nuscenes.eval.detection.config import config_factory
 from nuscenes import NuScenes
 from math import pi
-
+import numpy as np
 from .AveragePrecision import AveragePrecision
 from lightning.pytorch.loggers import TensorBoardLogger
 
@@ -22,12 +22,12 @@ class CPModel(LightningModule):
         super().__init__()
         self.cfg = cfg
         self.model = model
-        self.avg_precision = AveragePrecision()
-        self.avg_prec = 0
-        self.preds = []
+        # self.avg_precision = AveragePrecision()
+        # self.avg_prec = 0
+        # self.preds = []
 
     def training_step(self, batch, batch_idx):
-        loss, boxes = self.model(batch, return_loss=True)
+        loss, orig_preds, boxes = self.model(batch)
         loss, second_losses = self.parse_second_losses(loss)
         self.log("train_loss", loss)
         self.log("train_loss_hm", second_losses['hm_loss'][0])
@@ -41,43 +41,57 @@ class CPModel(LightningModule):
         #     label_boxes = label_boxes[~torch.all(label_boxes == 0.0, dim=1)]
         #     self.avg_prec += self.avg_precision(preds, scores, label_boxes)
         #     self.avg_precision.reset()
-        
-        if batch_idx % 400 == 0:
+
+        if batch_idx % 500 == 0:
+            plt.matshow(np.array(batch['hm'][0][0].squeeze().detach().cpu()))
+            plt.savefig('label.png')
+            plt.close()
+            plt.matshow(
+                np.array(orig_preds[0]['hm'][0].squeeze().detach().cpu()))
+            plt.savefig('pred.png')
+            plt.close()
             preds_boxes = boxes[0]['box3d_lidar']
             # filter out boxes with confidence score less than 0.5
             preds_boxes = preds_boxes[boxes[0]['scores'] > 0.5]
             # TODO: display confidence score in visualization next to corresponding box
-            label_boxes = batch['gt_boxes_and_cls'][0, :, :-1].squeeze(0)
             # remove any rows with all zeros
-            label_boxes = label_boxes[~torch.all(label_boxes == 0.0, dim=1)]
+            label_boxes = batch['gt_boxes_and_cls'][0, :, :-1].squeeze(0)
             token = batch['metadata'][0]['token']
             self.visualize(preds_boxes, label_boxes,
-                       f'{self.current_epoch}-{batch_idx}-{token}')
+                           f'{self.current_epoch}-{batch_idx}-{token}')
 
         return loss
-    
+
     # def on_train_epoch_end(self):
     #     self.log('train_avg_prec', self.avg_prec / self.trainer.num_training_batches)
     #     self.avg_prec = 0
 
-    def log_tb_images(self, image, idx, token) -> None:
-        # Get tensorboard logger
-        tb_logger = None
-        for logger in self.trainer.loggers:
-            if isinstance(logger, TensorBoardLogger):
-                tb_logger = logger.experiment
-                break
+    # def log_tb_images(self, image, idx, token) -> None:
+    #     # Get tensorboard logger
+    #     tb_logger = None
+    #     for logger in self.trainer.loggers:
+    #         if isinstance(logger, TensorBoardLogger):
+    #             tb_logger = logger.experiment
+    #             break
 
-        if tb_logger is None:
-            raise ValueError('TensorBoard Logger not found')
+    #     if tb_logger is None:
+    #         raise ValueError('TensorBoard Logger not found')
 
-        # Log the images (Give them different names)
-        tb_logger.add_image(f"Image/{idx}_{token}", image)
+    #     # Log the images (Give them different names)
+    #     tb_logger.add_image(f"Image/{idx}_{token}", image)
 
     def test_step(self, batch, batch_idx):
-        preds = self.model(batch, return_loss=False)
-        self.preds.append(preds)
-        preds_boxes = preds[0]['box3d_lidar']
+        _, orig_preds, boxes = self.model(batch)
+        plt.matshow(np.array(batch['hm'][0][0].squeeze().detach().cpu()))
+        plt.savefig('label.png')
+        plt.close()
+        plt.matshow(
+            np.array(orig_preds[0]['hm'][0].squeeze().detach().cpu()))
+        plt.savefig('pred.png')
+        plt.close()
+        
+        # self.preds.append(boxes)
+        preds_boxes = boxes[0]['box3d_lidar']
         # TODO: display confidence score in visualization next to corresponding box
         label_boxes = batch['gt_boxes_and_cls'][..., :-1].squeeze(0)
         # remove any rows with all zeros
@@ -85,46 +99,45 @@ class CPModel(LightningModule):
         token = batch['metadata'][0]['token']
         self.visualize(preds_boxes, label_boxes,
                        f'{token}')
-
         # self.avg_precision.update(preds_boxes, preds[0]['scores'], label_boxes)
         # print(self.avg_precision.compute().item(), token)
         # self.avg_precision.reset()
+        return boxes
 
-        # return boxes
 
-        # for i in range(preds_boxes.shape[0]):
-        #     attr = 'vehicle.moving' if sqrt(
-        #         preds_boxes[i, 6] ** 2 + preds_boxes[i, 7] ** 2) > 0.2 else 'vehicle.parked'
-        #     pred = {
-        #         'sample_token': batch['metadata'][0]['token'],
-        #         'translation': preds_boxes[i, :3].tolist(),
-        #         'size': preds_boxes[i, 3:6].tolist(),
-        #         'rotation': R.from_euler('z', preds_boxes[i, -1].item(), degrees=False).as_quat().tolist(),
-        #         'velocity': preds_boxes[i, 6:8].tolist(),
-        #         'detection_name': 'car',
-        #         'detection_score': preds[0]['scores'][i].item(),
-        #         'attribute_name': attr
-        #     }
-        #     self.preds.append(pred)
+    #     # for i in range(preds_boxes.shape[0]):
+    #     #     attr = 'vehicle.moving' if sqrt(
+    #     #         preds_boxes[i, 6] ** 2 + preds_boxes[i, 7] ** 2) > 0.2 else 'vehicle.parked'
+    #     #     pred = {
+    #     #         'sample_token': batch['metadata'][0]['token'],
+    #     #         'translation': preds_boxes[i, :3].tolist(),
+    #     #         'size': preds_boxes[i, 3:6].tolist(),
+    #     #         'rotation': R.from_euler('z', preds_boxes[i, -1].item(), degrees=False).as_quat().tolist(),
+    #     #         'velocity': preds_boxes[i, 6:8].tolist(),
+    #     #         'detection_name': 'car',
+    #     #         'detection_score': preds[0]['scores'][i].item(),
+    #     #         'attribute_name': attr
+    #     #     }
+    #     #     self.preds.append(pred)
 
-    def on_test_epoch_end(self):
-        scores = []
-        for pred in self.preds:
-            scores.append(pred[0]['scores'])
-        scores = torch.cat(scores)
-        plt.hist(scores.cpu().numpy(), bins=50)
-        plt.savefig(os.path.join(self.logger.log_dir, "scores.png"))
-        plt.close()
-        
-        # with open(os.path.join(self.logger.log_dir, "prediction.pkl"), "wb") as f:
-        #     pickle.dump(self.preds, f)
+    # def on_test_epoch_end(self):
+    #     scores = []
+    #     for pred in self.preds:
+    #         scores.append(pred[0]['scores'])
+    #     scores = torch.cat(scores)
+    #     plt.hist(scores.cpu().numpy(), bins=50)
+    #     plt.savefig(os.path.join(self.logger.log_dir, "scores.png"))
+    #     plt.close()
 
-        # nusc = NuScenes(version='v1.0-trainval', dataroot='/home/vxm240030/nuscenes', verbose=True)
+    #     # with open(os.path.join(self.logger.log_dir, "prediction.pkl"), "wb") as f:
+    #     #     pickle.dump(self.preds, f)
 
-        # eval = DetectionEval(nusc, config_factory("cvpr_2019"), os.path.join(self.logger.log_dir, "prediction.pkl"), 'val', self.logger.log_dir, verbose=True)
+    #     # nusc = NuScenes(version='v1.0-trainval', dataroot='/home/vxm240030/nuscenes', verbose=True)
 
-        # eval.main()
-        pass
+    #     # eval = DetectionEval(nusc, config_factory("cvpr_2019"), os.path.join(self.logger.log_dir, "prediction.pkl"), 'val', self.logger.log_dir, verbose=True)
+
+    #     # eval.main()
+    #     pass
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
@@ -152,29 +165,38 @@ class CPModel(LightningModule):
 
         return loss, log_vars
 
-    def visualize(self, pred_boxes_3d, label_boxes_3d, token):
+    def visualize(self, pred_boxes_3d, label_boxes_3d, token, rotate=True):
        # Create a plot
         fig, ax = plt.subplots()
 
         for box in pred_boxes_3d:
             x, y, _, w, l, _, _, _, yaw = box
+
+            # flip y axis
+            y = -y
+
             lower_left_x = x - w / 2
             lower_left_y = y - l / 2
             w = w.item()
             l = l.item()
+            yaw = yaw * 180 / pi
             rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item(
-            )), w, l, yaw * 180 / pi, linewidth=1, edgecolor='r', facecolor='none', rotation_point='center')
+            )), w, l, yaw, linewidth=1, edgecolor='r', facecolor='none', rotation_point='center')
             ax.add_patch(rect)
             # ax.text(x, y, f'{int(yaw * 180 / pi)}', color='r')
 
         for box in label_boxes_3d:
             x, y, _, w, l, _, _, _, yaw = box
+            # flip y axis
+            y = -y
             lower_left_x = x - w / 2
             lower_left_y = y - l / 2
             w = w.item()
             l = l.item()
+            yaw = yaw * 180 / pi
+            if rotate: yaw += 90
             rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item(
-            )), w, l, yaw * 180 / pi, linewidth=1, edgecolor='g', facecolor='none', rotation_point='center')
+            )), w, l, yaw, linewidth=1, edgecolor='g', facecolor='none', rotation_point='center')
             ax.add_patch(rect)
             # if (_yaw := 90 + yaw * 180 / pi) != 0:
             #     print(_yaw, yaw)

@@ -73,7 +73,7 @@ test_cfg = dict(
     nms=dict(
         nms_pre_max_size=1000,
         nms_post_max_size=83,
-        nms_iou_threshold=0.75,
+        nms_iou_threshold=0.2,
     ),
     score_threshold=0.1,
     pc_range=[-51.2, -51.2],
@@ -165,8 +165,8 @@ val_anno = "data/nuScenes/infos_val_10sweeps_withvelo_filter_True.pkl"
 test_anno = None
 
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=8,
+    samples_per_gpu=4,
+    workers_per_gpu=4,
     train=dict(
         type=dataset_type,
         root_path=data_root,
@@ -204,7 +204,7 @@ optimizer = dict(
     type="adam", amsgrad=0.0, wd=0.01, fixed_wd=True, moving_average=False,
 )
 lr_config = dict(
-    type="one_cycle", lr_max=0.001, moms=[0.95, 0.85], div_factor=10.0, pct_start=0.4,
+    type="one_cycle", lr_max=0.00001, moms=[0.95, 0.85], div_factor=10.0, pct_start=0.4,
 )
 
 checkpoint_config = dict(interval=1)
@@ -218,10 +218,12 @@ log_config = dict(
 )
 # yapf:enable
 # runtime settings
-total_epochs = 15
+total_epochs = 25
 device_ids = range(1, 4)
 dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"
 work_dir = './work_dirs/{}/'.format(__file__[__file__.rfind('/') + 1:-3])
-load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_0/checkpoints/epoch=1-step=3432.ckpt'
+# load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_23/checkpoints/epoch=19-step=274480.ckpt'
+load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_onestage_custom/train/version_1/checkpoints/last.ckpt'
+# load_from = None
 workflow = [('train', 1)]

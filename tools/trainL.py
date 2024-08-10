@@ -45,7 +45,7 @@ def main():
     model = build_detector(
         cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
 
-    modelmodule = CPModel(model)
+    modelmodule = CPModel(model, cfg)
 
     dataset = build_dataset(cfg.data.train)
     data_loader = DataLoader(
@@ -79,7 +79,7 @@ def main():
 
     trainer = Trainer(
         accelerator='gpu',
-        devices=[3],
+        devices=[0, 1, 2, 3],
         max_epochs=hyperparameters['epochs'],
         strategy=DDPStrategy(find_unused_parameters=False),
         logger=logger,
@@ -94,7 +94,7 @@ def main():
     trainer.fit(
         model=modelmodule,
         train_dataloaders=data_loader,
-        # ckpt_path=cfg.load_from,
+        ckpt_path=cfg.load_from,
     )
 
     print('TRAINING DONE')

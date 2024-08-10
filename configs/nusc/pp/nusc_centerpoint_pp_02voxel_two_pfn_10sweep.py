@@ -5,11 +5,11 @@ from det3d.utils.config_tool import get_downsample_factor
 
 tasks = [
     dict(num_class=1, class_names=["car"]),
-    # dict(num_class=2, class_names=["truck", "construction_vehicle"]),
-    # dict(num_class=2, class_names=["bus", "trailer"]),
-    # dict(num_class=1, class_names=["barrier"]),
-    # dict(num_class=2, class_names=["motorcycle", "bicycle"]),
-    # dict(num_class=2, class_names=["pedestrian", "traffic_cone"]),
+    dict(num_class=2, class_names=["truck", "construction_vehicle"]),
+    dict(num_class=2, class_names=["bus", "trailer"]),
+    dict(num_class=1, class_names=["barrier"]),
+    dict(num_class=2, class_names=["motorcycle", "bicycle"]),
+    dict(num_class=2, class_names=["pedestrian", "traffic_cone"]),
 ]
 
 class_names = list(itertools.chain(*[t["class_names"] for t in tasks]))
@@ -51,8 +51,7 @@ model = dict(
         dataset='nuscenes',
         weight=0.25,
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 1.0, 1.0],
-        common_heads={'reg': (2, 2), 'height': (1, 2), 'dim': (3, 2), 'rot': (
-            2, 2), 'vel': (2, 2)},  # (output_channel, num_conv)
+        common_heads={'reg': (2, 2), 'height': (1, 2), 'dim':(3, 2), 'rot':(2, 2), 'vel': (2, 2)}, # (output_channel, num_conv)
     ),
 )
 
@@ -73,7 +72,7 @@ test_cfg = dict(
     nms=dict(
         nms_pre_max_size=1000,
         nms_post_max_size=83,
-        nms_iou_threshold=0.75,
+        nms_iou_threshold=0.2,
     ),
     score_threshold=0.1,
     pc_range=[-51.2, -51.2],
@@ -92,29 +91,29 @@ db_sampler = dict(
     db_info_path="data/nuScenes/dbinfos_train_10sweeps_withvelo.pkl",
     sample_groups=[
         dict(car=2),
-        # dict(truck=3),
-        # dict(construction_vehicle=7),
-        # dict(bus=4),
-        # dict(trailer=6),
-        # dict(barrier=2),
-        # dict(motorcycle=6),
-        # dict(bicycle=6),
-        # dict(pedestrian=2),
-        # dict(traffic_cone=2),
+        dict(truck=3),
+        dict(construction_vehicle=7),
+        dict(bus=4),
+        dict(trailer=6),
+        dict(barrier=2),
+        dict(motorcycle=6),
+        dict(bicycle=6),
+        dict(pedestrian=2),
+        dict(traffic_cone=2),
     ],
     db_prep_steps=[
         dict(
             filter_by_min_num_points=dict(
                 car=5,
-                # truck=5,
-                # bus=5,
-                # trailer=5,
-                # construction_vehicle=5,
-                # traffic_cone=5,
-                # barrier=5,
-                # motorcycle=5,
-                # bicycle=5,
-                # pedestrian=5,
+                truck=5,
+                bus=5,
+                trailer=5,
+                construction_vehicle=5,
+                traffic_cone=5,
+                barrier=5,
+                motorcycle=5,
+                bicycle=5,
+                pedestrian=5,
             )
         ),
         dict(filter_by_difficulty=[-1],),
@@ -124,7 +123,7 @@ db_sampler = dict(
 )
 train_preprocessor = dict(
     mode="train",
-    shuffle_points=False,
+    shuffle_points=True,
     global_rot_noise=[-0.3925, 0.3925],
     global_scale_noise=[0.95, 1.05],
     db_sampler=db_sampler,
@@ -165,7 +164,7 @@ val_anno = "data/nuScenes/infos_val_10sweeps_withvelo_filter_True.pkl"
 test_anno = None
 
 data = dict(
-    samples_per_gpu=2,
+    samples_per_gpu=4,
     workers_per_gpu=8,
     train=dict(
         type=dataset_type,
@@ -213,18 +212,16 @@ log_config = dict(
     interval=5,
     hooks=[
         dict(type="TextLoggerHook"),
-        dict(type='TensorboardLoggerHook')
+        # dict(type='TensorboardLoggerHook')
     ],
 )
 # yapf:enable
 # runtime settings
-total_epochs = 15
-device_ids = range(1, 4)
+total_epochs = 20
+device_ids = range(8)
 dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"
 work_dir = './work_dirs/{}/'.format(__file__[__file__.rfind('/') + 1:-3])
-# load_from = '/home/imren/CenterPoint/fused_ckpt2.pth'
-load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_0/checkpoints/epoch=1-step=3432.ckpt'
-load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_18/checkpoints/last.ckpt'
-resume_from = None
+load_from = None
+resume_from = None 
 workflow = [('train', 1)]
