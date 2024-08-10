@@ -37,9 +37,9 @@ class Reformat(object):
                 coordinates=voxels["coordinates"],
             )
 
-        if res["mode"] == "train":
-            data_bundle.update(res["lidar"]["targets"])
-        elif res["mode"] == "val":
+        # if res["mode"] == "train":
+        data_bundle.update(res["lidar"]["targets"])
+        if res["mode"] == "val":
             data_bundle.update(dict(metadata=meta, ))
 
             if self.double_flip:

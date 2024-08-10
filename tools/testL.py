@@ -24,6 +24,7 @@ def main():
 
     faulthandler.enable()
     torch.cuda.empty_cache()
+    torch.set_float32_matmul_precision('high')
 
     logger = TensorBoardLogger(
         save_dir=cfg.work_dir,
@@ -46,11 +47,12 @@ def main():
 
     modelmodule = CPModel(model, cfg)
 
-    dataset = build_dataset(cfg.data.train)
+    dataset = build_dataset(cfg.data.val)
+
     data_loader = DataLoader(
         dataset=dataset,
         batch_size=hyperparameters['batch_size'],
-        sampler=SequentialSampler(dataset),
+        shuffle=False,
         num_workers=hyperparameters['num_workers'],
         collate_fn=collate_kitti,
         pin_memory=True,
@@ -97,7 +99,7 @@ def main():
         ckpt_path=cfg.load_from
     )
 
-    print('\n=========================')
+    print('\n=======TESTING COMPLETE=======')
 
 
 if __name__ == '__main__':
