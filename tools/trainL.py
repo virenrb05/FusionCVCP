@@ -19,7 +19,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 
 def main():
-    torch.set_float32_matmul_precision('medium')
+    torch.set_float32_matmul_precision('high')
     cfg = Config.fromfile(
         '/home/vxm240030/CenterPoint/configs/nusc_onestage_custom.py')
 

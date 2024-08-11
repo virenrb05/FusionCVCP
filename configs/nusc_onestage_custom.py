@@ -225,7 +225,7 @@ device_ids = range(1, 4)
 dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"
 work_dir = './work_dirs/{}/'.format(__file__[__file__.rfind('/') + 1:-3])
-# load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_23/checkpoints/epoch=19-step=274480.ckpt'
-load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_23/checkpoints/last.ckpt'
-# load_from = None
+# load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_23/checkpoints/last.ckpt'
+load_from = None
+# load_from = './work_dirs/nusc_onestage_custom/train/version_3/checkpoints/last.ckpt'
 workflow = [('train', 1)]

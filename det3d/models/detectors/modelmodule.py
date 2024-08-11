@@ -3,17 +3,9 @@ from lightning import LightningModule
 from collections import OrderedDict
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import os
-import pickle
-from pathlib import Path
-from scipy.spatial.transform import Rotation as R
-from math import sqrt
-from nuscenes.eval.detection.evaluate import DetectionEval
-from nuscenes import NuScenes
 from math import pi
 import numpy as np
 from .AveragePrecision import AveragePrecision
-from lightning.pytorch.loggers import TensorBoardLogger
 
 
 class CPModel(LightningModule):
@@ -27,30 +19,45 @@ class CPModel(LightningModule):
         loss, orig_preds, boxes = self.model(batch)
         loss, second_losses = self.parse_second_losses(loss)
         self.log("train_loss", loss)
-        self.log("train_loss_hm", second_losses['hm_loss'][0])
-        self.log("train_loss_loc", second_losses['loc_loss'][0])
-        self.log("train_loss_loc_car", sum(second_losses['loc_loss_elem'][0]))
+        self.log("train_loss_hm", second_losses["hm_loss"][0])
+        self.log("train_loss_loc", second_losses["loc_loss"][0])
+        self.log("train_loss_loc_car", sum(second_losses["loc_loss_elem"][0]))
 
         if batch_idx % 400 == 0:
-            preds_boxes = boxes[0]['box3d_lidar']
+            preds_boxes = boxes[0]["box3d_lidar"]
             # filter out boxes with confidence score less than 0.5
             # preds_boxes = preds_boxes[boxes[0]['scores'] > 0.5]
-            self.visualize(batch, pred_boxes_3d=preds_boxes,
-                           orig_preds=orig_preds)
+
+            # visualize the predictions and ground truths for first batch only
+            self.visualize(batch, pred_boxes_3d=preds_boxes, orig_preds=orig_preds)
+
+            # for AP calculation, use all batches for both preds and labels
+            # for i in range(len(boxes)):
+            #     preds_boxes = boxes[i]['box3d_lidar']
+            #     scores = boxes[i]['scores']
+            #     labels = batch['gt_boxes_and_cls'][i, :, :-1]
+            #     labels = labels[~torch.all(labels == 0.0, dim=1)]
+            #     self.avg_precision.update(preds_boxes, scores, labels)
+
+            # ap = self.avg_precision.compute()
+            # self.log('train_ap', ap, batch_size=self.cfg.data.samples_per_gpu,
+            #          on_epoch=False, on_step=True)
+            # self.avg_precision.reset()
 
         return loss
 
     def test_step(self, batch, batch_idx):
         _, orig_preds, boxes = self.model(batch)
-        preds_boxes = boxes[0]['box3d_lidar']
-        self.visualize(batch, pred_boxes_3d=preds_boxes,
-                       orig_preds=orig_preds, idx=batch_idx)
+        preds_boxes = boxes[0]["box3d_lidar"]
+        self.visualize(
+            batch, pred_boxes_3d=preds_boxes, orig_preds=orig_preds, idx=batch_idx
+        )
 
-        labels = batch['gt_boxes_and_cls'][..., :7].squeeze(0)
+        labels = batch["gt_boxes_and_cls"][..., :7].squeeze(0)
         labels = labels[~torch.all(labels == 0.0, dim=1)]
 
-        ap = self.avg_precision(preds_boxes, boxes[0]['scores'], labels)
-        self.log('test_ap', ap, batch_size=1, on_epoch=False, on_step=True)
+        ap = self.avg_precision(preds_boxes, boxes[0]["scores"], labels)
+        self.log("test_ap", ap, batch_size=1, on_epoch=False, on_step=True)
         self.avg_precision.reset()
 
         return boxes
@@ -91,25 +98,37 @@ class CPModel(LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
-            self.parameters(), amsgrad=self.cfg.optimizer.amsgrad, weight_decay=self.cfg.optimizer.wd, betas=(0.9, 0.99), lr=self.cfg.lr_config.lr_max)
+            self.parameters(),
+            amsgrad=self.cfg.optimizer.amsgrad,
+            weight_decay=self.cfg.optimizer.wd,
+            betas=(0.9, 0.99),
+            lr=self.cfg.lr_config.lr_max,
+        )
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            optimizer, max_lr=self.cfg.lr_config.lr_max, total_steps=self.trainer.estimated_stepping_batches, max_momentum=self.cfg.lr_config.moms[0], base_momentum=self.cfg.lr_config.moms[1], div_factor=self.cfg.lr_config.div_factor, pct_start=self.cfg.lr_config.pct_start)
+            optimizer,
+            max_lr=self.cfg.lr_config.lr_max,
+            total_steps=self.trainer.estimated_stepping_batches,
+            max_momentum=self.cfg.lr_config.moms[0],
+            base_momentum=self.cfg.lr_config.moms[1],
+            div_factor=self.cfg.lr_config.div_factor,
+            pct_start=self.cfg.lr_config.pct_start,
+        )
         return {
-            'optimizer': optimizer,
-            'lr_scheduler': {
-                'scheduler': scheduler,
-                'monitor': 'train_loss',
-                'frequency': 1,
-                'interval': 'step'},
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "train_loss",
+                "frequency": 1,
+                "interval": "step",
+            },
         }
 
     def parse_second_losses(self, losses):
         log_vars = OrderedDict()
-        loss = sum(losses['loss'])
+        loss = sum(losses["loss"])
         for loss_name, loss_value in losses.items():
-            if loss_name == 'loc_loss_elem':
-                log_vars[loss_name] = [[i.item() for i in j]
-                                       for j in loss_value]
+            if loss_name == "loc_loss_elem":
+                log_vars[loss_name] = [[i.item() for i in j] for j in loss_value]
             else:
                 log_vars[loss_name] = [i.item() for i in loss_value]
 
@@ -117,18 +136,18 @@ class CPModel(LightningModule):
 
     def visualize(self, batch, pred_boxes_3d: torch.Tensor, orig_preds: dict, idx=0):
         writer = self.logger.experiment
-        token = batch['metadata'][0]['token']
-        writer.add_text('token', token, global_step=idx)
+        token = batch["metadata"][0]["token"]
+        writer.add_text("token", token, global_step=idx)
 
         # visualize the ground truth and predicted heatmaps
-        pred_hm = np.array(orig_preds[0]['hm'][0].squeeze().detach().cpu())
-        gt_hm = np.array(batch['hm'][0][0].squeeze().detach().cpu())
+        pred_hm = np.array(orig_preds[0]["hm"][0].squeeze().detach().cpu())
+        gt_hm = np.array(batch["hm"][0][0].squeeze().detach().cpu())
 
-        writer.add_image('pred_hm', pred_hm, global_step=idx, dataformats='HW')
-        writer.add_image('gt_hm', gt_hm, global_step=idx, dataformats='HW')
+        writer.add_image("pred_hm", pred_hm, global_step=idx, dataformats="HW")
+        writer.add_image("gt_hm", gt_hm, global_step=idx, dataformats="HW")
 
         # TODO: display confidence score in visualization next to corresponding box
-        label_boxes = batch['gt_boxes_and_cls'][..., :-1].squeeze(0)
+        label_boxes = batch["gt_boxes_and_cls"][0, :, :-1]
         # remove any rows with all zeros
         label_boxes_3d = label_boxes[~torch.all(label_boxes == 0.0, dim=1)]
 
@@ -146,8 +165,16 @@ class CPModel(LightningModule):
             w = w.item()
             l = l.item()
             yaw = yaw * 180 / pi
-            rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item(
-            )), w, l, yaw, linewidth=1, edgecolor='r', facecolor='none', rotation_point='center')
+            rect = patches.Rectangle(
+                (lower_left_x.item(), lower_left_y.item()),
+                w,
+                l,
+                yaw,
+                linewidth=1,
+                edgecolor="r",
+                facecolor="none",
+                rotation_point="center",
+            )
             ax.add_patch(rect)
 
         for box in label_boxes_3d:
@@ -160,28 +187,42 @@ class CPModel(LightningModule):
             w = w.item()
             l = l.item()
             yaw = yaw * 180 / pi
-            rect = patches.Rectangle((lower_left_x.item(), lower_left_y.item(
-            )), w, l, yaw, linewidth=1, edgecolor='g', facecolor='none', rotation_point='center')
+            rect = patches.Rectangle(
+                (lower_left_x.item(), lower_left_y.item()),
+                w,
+                l,
+                yaw,
+                linewidth=1,
+                edgecolor="g",
+                facecolor="none",
+                rotation_point="center",
+            )
             ax.add_patch(rect)
 
         # Plot the ego vehicle at the origin
-        ax.plot(0, 0, 'bo')  # blue dot
+        ax.plot(0, 0, "bo")  # blue dot
 
-        ax.legend(handles=[patches.Patch(color='r', label='Prediction'), patches.Patch(
-            color='g', label='Ground Truth')])
+        ax.legend(
+            handles=[
+                patches.Patch(color="r", label="Prediction"),
+                patches.Patch(color="g", label="Ground Truth"),
+            ]
+        )
 
         # Set plot limits
         ax.set_xlim(-50, 50)
         ax.set_ylim(-50, 50)
 
         # Set labels and title
-        ax.set_xlabel('X position')
-        ax.set_ylabel('Y position')
-        ax.set_title('2D Bounding Boxes Relative to Ego Vehicle')
+        ax.set_xlabel("X position")
+        ax.set_ylabel("Y position")
+        ax.set_title("2D Bounding Boxes Relative to Ego Vehicle")
 
         # Now we can save it to a numpy array
         fig.canvas.draw()
         viz = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
         viz = viz.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-        
-        writer.add_image('visual', viz, global_step=idx, dataformats='HWC')
+
+        writer.add_image("visual", viz, global_step=idx, dataformats="HWC")
+
+        plt.close()
