@@ -29,7 +29,7 @@ class CPModel(LightningModule):
             # preds_boxes = preds_boxes[boxes[0]['scores'] > 0.5]
 
             # visualize the predictions and ground truths for first batch only
-            self.visualize(batch, pred_boxes_3d=preds_boxes, orig_preds=orig_preds)
+            self.visualize(batch, pred_boxes_3d=preds_boxes, orig_preds=orig_preds, idx=self.trainer.global_step)
 
             # for AP calculation, use all batches for both preds and labels
             # for i in range(len(boxes)):
@@ -47,6 +47,7 @@ class CPModel(LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
+        self.logger.experiment.add_text("token", batch["metadata"][0]["token"], global_step=self.trainer.global_step)
         _, orig_preds, boxes = self.model(batch)
         preds_boxes = boxes[0]["box3d_lidar"]
         self.visualize(
@@ -166,10 +167,10 @@ class CPModel(LightningModule):
             l = l.item()
             yaw = yaw * 180 / pi
             rect = patches.Rectangle(
-                (lower_left_x.item(), lower_left_y.item()),
-                w,
-                l,
-                yaw,
+                xy=(lower_left_x.item(), lower_left_y.item()),
+                width=w,
+                height=l,
+                angle=yaw,
                 linewidth=1,
                 edgecolor="r",
                 facecolor="none",
@@ -188,10 +189,10 @@ class CPModel(LightningModule):
             l = l.item()
             yaw = yaw * 180 / pi
             rect = patches.Rectangle(
-                (lower_left_x.item(), lower_left_y.item()),
-                w,
-                l,
-                yaw,
+                xy=(lower_left_x.item(), lower_left_y.item()),
+                width=w,
+                height=l,
+                angle=yaw,
                 linewidth=1,
                 edgecolor="g",
                 facecolor="none",

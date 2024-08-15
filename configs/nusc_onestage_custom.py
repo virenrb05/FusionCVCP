@@ -203,10 +203,10 @@ data = dict(
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # optimizer
 optimizer = dict(
-    type="adam", amsgrad=0.0, wd=0.01, fixed_wd=True, moving_average=False,
+    type="adam", amsgrad=0.0, wd=1e-2, fixed_wd=True, moving_average=False,
 )
 lr_config = dict(
-    type="one_cycle", lr_max=0.00001, moms=[0.95, 0.85], div_factor=10.0, pct_start=0.4,
+    type="one_cycle", lr_max=1e-3, moms=[0.95, 0.85], div_factor=10.0, pct_start=0.4,
 )
 
 checkpoint_config = dict(interval=1)
@@ -220,12 +220,13 @@ log_config = dict(
 )
 # yapf:enable
 # runtime settings
-total_epochs = 25
-device_ids = range(1, 4)
+total_epochs = 15
+devices = [0, 1, 2, 3]
 dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"
 work_dir = './work_dirs/{}/'.format(__file__[__file__.rfind('/') + 1:-3])
 # load_from = '/home/vxm240030/CenterPoint/work_dirs/nusc_centerpoint_pp_02voxel_two_pfn_10sweep/train/version_23/checkpoints/last.ckpt'
-load_from = None
+# load_from=None
+load_from='work_dirs/nusc_onestage_custom/train/version_31/checkpoints/last.ckpt'
 # load_from = './work_dirs/nusc_onestage_custom/train/version_3/checkpoints/last.ckpt'
 workflow = [('train', 1)]

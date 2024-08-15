@@ -189,8 +189,6 @@ class Voxelization(object):
 
         res["lidar"]["annotations"] = gt_dict
         max_voxels = self.max_voxel_num[0]
-        # else:
-        #     max_voxels = self.max_voxel_num[1]
 
         voxels, coordinates, num_points = self.voxel_generator.generate(
             res["lidar"]["points"], max_voxels=max_voxels 

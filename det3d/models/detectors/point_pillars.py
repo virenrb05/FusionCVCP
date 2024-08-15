@@ -70,7 +70,7 @@ class PointPillars(SingleStageDetector):
         cvt_bev = torch.tensor([]).to(x.device)
         for batch in example['metadata']:
             bev_loaded_batch = torch.load(
-                f"/home/vxm240030/CenterPoint/predictions/{batch['token']}.pth", weights_only=True).to(x.device)
+                f"/home/vxm240030/CenterPoint/predictions/{batch['token']}.pt", weights_only=True).to(x.device)
             cvt_bev = torch.cat((cvt_bev, bev_loaded_batch), dim=0)
         cvt_bev = self.decoder(cvt_bev)
 

@@ -14,6 +14,7 @@ venv/
 *.zip
 *.bin
 .vscode/
+predictionsx
 predictions
 work_dirs
 runs
