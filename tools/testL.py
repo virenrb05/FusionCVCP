@@ -46,7 +46,7 @@ def main():
 
     modelmodule = CPModel(model, cfg)
 
-    dataset = build_dataset(cfg.data.train)
+    dataset = build_dataset(cfg.data.val) # cfg.data.train/cfg.data.val
 
     data_loader = DataLoader(
         dataset=dataset,
@@ -79,7 +79,7 @@ def main():
 
     trainer = Trainer(
         accelerator='gpu',
-        devices=[0],
+        devices=[1],
         num_nodes=1,
         max_epochs=1,
         precision='16-mixed',

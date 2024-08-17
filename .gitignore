@@ -23,3 +23,5 @@ nohup*.out
 label.png
 pred.png
 pretrained
+nusclogs
+infos_test_10sweeps_withvelo*

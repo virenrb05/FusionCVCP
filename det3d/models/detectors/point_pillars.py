@@ -107,7 +107,7 @@ class PointPillars(SingleStageDetector):
             
         preds_final = self.bbox_head.predict(example, new_preds, self.test_cfg)
         
-        loss = self.bbox_head.loss(example, preds, self.test_cfg)
+        loss = self.bbox_head.loss(example, preds)
 
         return loss, preds, preds_final
         

@@ -248,7 +248,7 @@ class CenterHead(nn.Module):
         y = torch.clamp(x.sigmoid_(), min=1e-4, max=1-1e-4)
         return y
 
-    def loss(self, example, preds_dicts, test_cfg, **kwargs):
+    def loss(self, example, preds_dicts):
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
@@ -276,8 +276,8 @@ class CenterHead(nn.Module):
 
             loc_loss = (box_loss*box_loss.new_tensor(self.code_weights)).sum()
 
-            hm_weight = 2.0 # used to be 1
-            loc_weight = .75 # used to be 0.25
+            hm_weight = 10.0 # used to be 1
+            loc_weight = 0.25 # used to be 0.25
             loss = hm_weight*hm_loss + loc_weight*loc_loss
 
             ret.update({'loss': loss, 'hm_loss': hm_loss.detach().cpu(), 'loc_loss':loc_loss, 'loc_loss_elem': box_loss.detach().cpu(), 'num_positive': example['mask'][task_id].float().sum()})

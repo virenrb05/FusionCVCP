@@ -6,6 +6,7 @@ import matplotlib.patches as patches
 from math import pi
 import numpy as np
 from .AveragePrecision import AveragePrecision
+import json
 
 
 class CPModel(LightningModule):
@@ -14,6 +15,7 @@ class CPModel(LightningModule):
         self.cfg = cfg
         self.model = model
         self.avg_precision = AveragePrecision()
+        self.preds = {}
 
     def training_step(self, batch, batch_idx):
         loss, orig_preds, boxes = self.model(batch)
@@ -47,55 +49,110 @@ class CPModel(LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
+        # NOTE: a box is of form xyz, wlh, yaw, vx, vy, class
         self.logger.experiment.add_text("token", batch["metadata"][0]["token"], global_step=self.trainer.global_step)
         _, orig_preds, boxes = self.model(batch)
         preds_boxes = boxes[0]["box3d_lidar"]
-        self.visualize(
-            batch, pred_boxes_3d=preds_boxes, orig_preds=orig_preds, idx=batch_idx
-        )
+        self.visualize(batch, pred_boxes_3d=preds_boxes, orig_preds=orig_preds, idx=batch_idx)
 
         labels = batch["gt_boxes_and_cls"][..., :7].squeeze(0)
         labels = labels[~torch.all(labels == 0.0, dim=1)]
-
+        
+        # log histogram of confidence scores
+        scores = boxes[0]["scores"]
+        if scores.numel() > 0: self.logger.experiment.add_histogram("scores", scores, global_step=self.trainer.global_step)
+        
+        # log average precision
         ap = self.avg_precision(preds_boxes, boxes[0]["scores"], labels)
+        self.logger.experiment.add_text("AP", str(ap), global_step=self.trainer.global_step)
         self.log("test_ap", ap, batch_size=1, on_epoch=False, on_step=True)
         self.avg_precision.reset()
+        
+        # add predictions to preds dict
+        self.preds[batch["metadata"][0]["token"]] = (preds_boxes, scores)
 
         return boxes
-
-        # for i in range(preds_boxes.shape[0]):
-        #     attr = 'vehicle.moving' if sqrt(
-        #         preds_boxes[i, 6] ** 2 + preds_boxes[i, 7] ** 2) > 0.2 else 'vehicle.parked'
-        #     pred = {
-        #         'sample_token': batch['metadata'][0]['token'],
-        #         'translation': preds_boxes[i, :3].tolist(),
-        #         'size': preds_boxes[i, 3:6].tolist(),
-        #         'rotation': R.from_euler('z', preds_boxes[i, -1].item(), degrees=False).as_quat().tolist(),
-        #         'velocity': preds_boxes[i, 6:8].tolist(),
-        #         'detection_name': 'car',
-        #         'detection_score': preds[0]['scores'][i].item(),
-        #         'attribute_name': attr
-        #     }
-        #     self.preds.append(pred)
-
-    # def on_test_epoch_end(self):
-    #     scores = []
-    #     for pred in self.preds:
-    #         scores.append(pred[0]['scores'])
-    #     scores = torch.cat(scores)
-    #     plt.hist(scores.cpu().numpy(), bins=50)
-    #     plt.savefig(os.path.join(self.logger.log_dir, "scores.png"))
-    #     plt.close()
-
-    #     # with open(os.path.join(self.logger.log_dir, "prediction.pkl"), "wb") as f:
-    #     #     pickle.dump(self.preds, f)
-
-    #     # nusc = NuScenes(version='v1.0-trainval', dataroot='/home/vxm240030/nuscenes', verbose=True)
-
-    #     # eval = DetectionEval(nusc, config_factory("cvpr_2019"), os.path.join(self.logger.log_dir, "prediction.pkl"), 'val', self.logger.log_dir, verbose=True)
-
-    #     # eval.main()
-    #     pass
+    
+    def on_test_end(self):
+        # from nuscenes import NuScenes
+        # from nuscenes.eval.detection.evaluate import DetectionEval, DetectionConfig
+        # from nuscenes.eval.common.config import config_factory
+        # import json
+        # # cfg = config_factory('detection_cvpr_2019')
+        # with open('cfg.json') as f:
+        #     cfg = DetectionConfig.deserialize(json.load(f))
+        # nusc = NuScenes(version='v1.0-trainval', dataroot='data/nuScenes', verbose=True)
+        # eval = DetectionEval(nusc, cfg, 'predictions.json', 'val', 'nusclogs')
+        # eval.main(plot_examples=5)
+        # pass
+        
+        # generate predictions.json for nuscenes evaluation
+        # needs to be in specific format
+        '''
+        {
+            "meta": {
+                "use_camera": true
+                "use_lidar": true
+                "use_radar": false
+                "use_map": false
+                "use_external": false
+            },
+            "results": {
+                sample_token <str>: List[sample_result] -- Maps each sample_token to a list of sample_results.
+            }
+        }
+        '''
+        
+        # each sample_result is a dict with the following
+        '''
+        sample_result {
+        "sample_token":       <str>         -- Foreign key. Identifies the sample/keyframe for which objects are detected.
+        "translation":        <float> [3]   -- Estimated bounding box location in m in the global frame: center_x, center_y, center_z.
+        "size":               <float> [3]   -- Estimated bounding box size in m: width, length, height.
+        "rotation":           <float> [4]   -- Estimated bounding box orientation as quaternion in the global frame: w, x, y, z.
+        "velocity":           <float> [2]   -- Estimated bounding box velocity in m/s in the global frame: vx, vy.
+        "detection_name":     <str>         -- The predicted class for this sample_result, e.g. car, pedestrian.
+        "detection_score":    <float>       -- Object prediction score between 0 and 1 for the class identified by detection_name.
+        "attribute_name":     <str>         -- Name of the predicted attribute or empty string for classes without attributes.
+                                            See table below for valid attributes for each class, e.g. cycle.with_rider.
+                                            Attributes are ignored for classes without attributes.
+                                            There are a few cases (0.4%) where attributes are missing also for classes
+                                            that should have them. We ignore the predicted attributes for these cases.
+        }
+        '''
+        
+        # construct predictions.json
+        predictions = {
+            "meta": {
+                "use_camera": True,
+                "use_lidar": True,
+                "use_radar": False,
+                "use_map": False,
+                "use_external": False
+            },
+            'results': {}
+        }
+        
+        for token, (boxes, scores) in self.preds.items():
+            sample_result = []
+            for box, score in zip(boxes, scores):
+                attr = 'vehicle.moving' if torch.norm(box[7:9]) > 0.2 else 'vehicle.parked'
+                pred = {
+                    'sample_token': token,
+                    'translation': box[:3].tolist(),
+                    'size': box[3:6].tolist(),
+                    'rotation': box[6].tolist(),
+                    'velocity': box[7:9].tolist(),
+                    'detection_name': 'car',
+                    'detection_score': score.item(),
+                    'attribute_name': attr
+                }
+                sample_result.append(pred)
+            predictions['results'][token] = sample_result
+        
+        # write predictions to file
+        with open('predictions.json', 'w') as f:
+            json.dump(predictions, f)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
