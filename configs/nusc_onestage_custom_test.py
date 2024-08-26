@@ -80,7 +80,7 @@ test_cfg = dict(
         nms_post_max_size=83,
         nms_iou_threshold=0.2,
     ),
-    score_threshold=0.3,
+    score_threshold=0.35,
     pc_range=[-51.2, -51.2],
     out_size_factor=get_downsample_factor(model),
     voxel_size=[0.2, 0.2],
@@ -233,7 +233,7 @@ log_config = dict(
 # yapf:enable
 # runtime settings
 total_epochs = 15
-devices = [0, 1, 2, 3]
+devices = [3]
 dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"
 work_dir = "./work_dirs/{}/".format(__file__[__file__.rfind("/") + 1 : -3])

@@ -7,6 +7,7 @@ from math import pi
 import numpy as np
 from .AveragePrecision import AveragePrecision
 import json
+from scipy.spatial.transform import Rotation as R
 
 
 class CPModel(LightningModule):
@@ -65,15 +66,17 @@ class CPModel(LightningModule):
         # log average precision
         ap = self.avg_precision(preds_boxes, boxes[0]["scores"], labels)
         self.logger.experiment.add_text("AP", str(ap), global_step=self.trainer.global_step)
-        self.log("test_ap", ap, batch_size=1, on_epoch=False, on_step=True)
-        self.avg_precision.reset()
+        self.log("test_ap_step", ap, batch_size=1, on_step=True, on_epoch=False)
         
         # add predictions to preds dict
         self.preds[batch["metadata"][0]["token"]] = (preds_boxes, scores)
 
         return boxes
     
-    def on_test_end(self):
+    def on_test_epoch_end(self) -> None:
+        self.log("test_ap_epoch", self.avg_precision.compute(), sync_dist=True)
+        self.avg_precision.reset()
+    
         # from nuscenes import NuScenes
         # from nuscenes.eval.detection.evaluate import DetectionEval, DetectionConfig
         # from nuscenes.eval.common.config import config_factory
@@ -136,13 +139,13 @@ class CPModel(LightningModule):
         for token, (boxes, scores) in self.preds.items():
             sample_result = []
             for box, score in zip(boxes, scores):
-                attr = 'vehicle.moving' if torch.norm(box[7:9]) > 0.2 else 'vehicle.parked'
+                attr = 'vehicle.moving' if torch.norm(box[6:8]) > 0.2 else 'vehicle.parked'
                 pred = {
                     'sample_token': token,
                     'translation': box[:3].tolist(),
                     'size': box[3:6].tolist(),
-                    'rotation': box[6].tolist(),
-                    'velocity': box[7:9].tolist(),
+                    'rotation': R.from_euler('z', box[8].tolist()).as_quat(scalar_first=True).tolist(),
+                    'velocity': box[6:8].tolist(),
                     'detection_name': 'car',
                     'detection_score': score.item(),
                     'attribute_name': attr
@@ -151,7 +154,7 @@ class CPModel(LightningModule):
             predictions['results'][token] = sample_result
         
         # write predictions to file
-        with open('predictions.json', 'w') as f:
+        with open(f'{self.logger.log_dir}/predictions.json', 'w') as f:
             json.dump(predictions, f)
 
     def configure_optimizers(self):

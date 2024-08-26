@@ -21,7 +21,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 def main():
     torch.set_float32_matmul_precision('medium')
     cfg = Config.fromfile(
-        '/home/vxm240030/CenterPoint/configs/nusc_onestage_custom.py')
+        '/home/vxm240030/CenterPoint/configs/nusc_onestage_custom_train.py')
 
     faulthandler.enable()
     torch.cuda.empty_cache()
@@ -40,6 +40,8 @@ def main():
         'max_momentum': cfg.lr_config.moms[0],
         'weight_decay': cfg.optimizer.wd,
         'num_workers': cfg.data.workers_per_gpu,
+        'test_conf_threshold': cfg.test_cfg.score_threshold,
+        'devices': cfg.devices
     }
 
     model = build_detector(
@@ -79,7 +81,7 @@ def main():
 
     trainer = Trainer(
         accelerator='gpu',
-        devices=cfg.devices,
+        devices=hyperparameters['devices'],
         max_epochs=hyperparameters['epochs'],
         strategy=DDPStrategy(find_unused_parameters=False),
         logger=logger,
