@@ -1,6 +1,6 @@
 # CVCP-Fusion: On Implicit Depth Estimation for 3D Bounding Box Prediction
 
-3D Object Detection and Tracking using center points in the bird-eye view.
+Center-Based 3D Object Detection and Tracking using Cross-View Transformers
 
 <p align="center"> <img src='docs/NewModelArchitectureV2.png' align="center" height="230px"> </p>
 
