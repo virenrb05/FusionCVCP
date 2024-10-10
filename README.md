@@ -4,7 +4,7 @@ Center-Based 3D Object Detection and Tracking using Cross-View Transformers
 
 <p align="center"> <img src='docs/NewModelArchitectureV2.png' align="center" height="230px"> </p>
 
-## Use CenterPoint
+## Setting up CenterPoint
 
 ### Installation
 
@@ -13,15 +13,6 @@ Please refer to [INSTALL](docs/INSTALL.md) to set up libraries needed for distri
 ### Benchmark Evaluation and Training 
 
 Please refer to [GETTING_START](docs/GETTING_START.md) to prepare the data. Then follow the instruction there to reproduce our detection and tracking results. All detection configurations are included in [configs](configs).
-
-### Develop
-
-If you are interested in training CenterPoint on a new dataset, use CenterPoint in a new task, or use a new network architecture for CenterPoint, please refer to [DEVELOP](docs/DEVELOP.md). Feel free to send us an email for discussions or suggestions. 
-
-### ToDo List
-- [ ] Support visualization with Open3D  
-- [ ] Colab demo 
-- [ ] Docker   
 
 ## License
 
