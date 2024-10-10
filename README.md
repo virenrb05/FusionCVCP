@@ -2,7 +2,7 @@
 
 3D Object Detection and Tracking using center points in the bird-eye view.
 
-<p align="center"> <img src='docs/teaser.png' align="center" height="230px"> </p>
+<p align="center"> <img src='docs/NewModelArchitectureV2.png' align="center" height="230px"> </p>
 
 ## Use CenterPoint
 
